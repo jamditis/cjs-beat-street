@@ -2,10 +2,12 @@ import Phaser from 'phaser';
 import { eventBus } from '../../lib/EventBus';
 import { Player } from '../entities/Player';
 import { CameraController } from '../systems/CameraController';
+import { InputManager } from '../systems/InputManager';
 
 export class CityMapScene extends Phaser.Scene {
   private player!: Player;
   private cameraController!: CameraController;
+  private inputManager!: InputManager;
   private currentZone = 'downtown';
 
   // World bounds
@@ -34,12 +36,16 @@ export class CityMapScene extends Phaser.Scene {
     // Create zones/districts
     this.createDistricts();
 
-    // Create the player using the Player entity
+    // Create InputManager for unified input handling (keyboard + touch)
+    this.inputManager = new InputManager(this);
+
+    // Create the player using the Player entity with InputManager
     this.player = new Player({
       scene: this,
       x: this.worldWidth / 2,
       y: this.worldHeight / 2,
       color: 0x2a9d8f,
+      inputManager: this.inputManager,
     });
 
     // Setup camera controller
@@ -243,11 +249,18 @@ export class CityMapScene extends Phaser.Scene {
   }
 
   private createInstructions(): void {
-    const instructions = [
-      'WASD or Arrow Keys - Move',
-      'Mouse Wheel / +/- - Zoom',
-      'Click Convention Center to enter',
-    ];
+    const isMobile = this.inputManager.isMobileDevice();
+    const instructions = isMobile
+      ? [
+          'Touch joystick (bottom-left) - Move',
+          'Pinch to zoom',
+          'Tap Convention Center to enter',
+        ]
+      : [
+          'WASD or Arrow Keys - Move',
+          'Mouse Wheel / +/- - Zoom',
+          'Click Convention Center to enter',
+        ];
 
     this.add
       .text(20, this.cameras.main.height - 100, instructions.join('\n'), {
@@ -299,6 +312,10 @@ export class CityMapScene extends Phaser.Scene {
     // Cleanup when scene shuts down
     if (this.player) {
       this.player.destroy();
+    }
+
+    if (this.inputManager) {
+      this.inputManager.destroy();
     }
   }
 }
