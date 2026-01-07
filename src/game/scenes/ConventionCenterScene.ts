@@ -6,6 +6,17 @@ import { InputManager } from '../systems/InputManager';
 import { POIManager } from '../systems/POIManager';
 import { PresenceManager } from '../systems/PresenceManager';
 import { POIType, POIData } from '../../types/poi';
+import { VenueId, IndoorVenueConfig, FloorConfig } from '../../types/venue';
+import { getIndoorVenueConfig, getFloorConfig } from '../../config/venues';
+
+/**
+ * Scene data passed when starting the ConventionCenterScene
+ */
+export interface ConventionCenterSceneData {
+  venueId: VenueId;
+  indoorVenueId: string;
+  floor?: number;
+}
 
 export class ConventionCenterScene extends Phaser.Scene {
   private player!: Player;
@@ -15,9 +26,15 @@ export class ConventionCenterScene extends Phaser.Scene {
   private presenceManager!: PresenceManager;
   private currentFloor = 1;
 
-  // World bounds
-  private readonly worldWidth = 1600;
-  private readonly worldHeight = 1200;
+  // Venue configuration
+  private currentVenueId!: VenueId;
+  private currentIndoorVenueId!: string;
+  private indoorVenueConfig!: IndoorVenueConfig;
+  private floorConfig!: FloorConfig;
+
+  // World bounds (updated from floor config)
+  private worldWidth = 1600;
+  private worldHeight = 1200;
 
   // UI Elements
   private floorText!: Phaser.GameObjects.Text;
@@ -34,6 +51,30 @@ export class ConventionCenterScene extends Phaser.Scene {
     super({ key: 'ConventionCenterScene' });
   }
 
+  /**
+   * Initialize scene with venue and floor configuration
+   */
+  init(data: ConventionCenterSceneData): void {
+    this.currentVenueId = data.venueId;
+    this.currentIndoorVenueId = data.indoorVenueId;
+    this.currentFloor = data.floor || 1;
+
+    const config = getIndoorVenueConfig(this.currentVenueId, this.currentIndoorVenueId);
+    if (!config) {
+      throw new Error(`Indoor venue not found: ${this.currentIndoorVenueId}`);
+    }
+    this.indoorVenueConfig = config;
+
+    const floorConfig = config.floors.find(f => f.floor === this.currentFloor);
+    if (!floorConfig) {
+      throw new Error(`Floor ${this.currentFloor} not found`);
+    }
+    this.floorConfig = floorConfig;
+
+    this.worldWidth = floorConfig.worldBounds.width;
+    this.worldHeight = floorConfig.worldBounds.height;
+  }
+
   create(): void {
     // Set world bounds for physics
     this.physics.world.setBounds(0, 0, this.worldWidth, this.worldHeight);
@@ -47,8 +88,8 @@ export class ConventionCenterScene extends Phaser.Scene {
     // Create the player using the Player entity with InputManager
     this.player = new Player({
       scene: this,
-      x: this.worldWidth / 2,
-      y: this.worldHeight / 2,
+      x: this.floorConfig.spawnPoint.x,
+      y: this.floorConfig.spawnPoint.y,
       color: 0x2a9d8f,
       inputManager: this.inputManager,
     });
@@ -109,6 +150,15 @@ export class ConventionCenterScene extends Phaser.Scene {
 
     // Setup event handlers for action button and navigation
     this.setupEventHandlers();
+
+    // Emit entered-building event with venue information
+    eventBus.emit('entered-building', {
+      venueId: this.currentVenueId,
+      indoorVenueId: this.currentIndoorVenueId,
+      floor: this.currentFloor,
+      displayName: this.indoorVenueConfig.displayName,
+      totalFloors: this.indoorVenueConfig.floors.length,
+    });
   }
 
   private createInteriorBackground(): void {
@@ -137,7 +187,7 @@ export class ConventionCenterScene extends Phaser.Scene {
   private createUI(): void {
     // Floor indicator - fixed to camera
     this.floorText = this.add
-      .text(20, 20, `Convention Center - Floor ${this.currentFloor}`, {
+      .text(20, 20, `${this.indoorVenueConfig.displayName} - Floor ${this.currentFloor}`, {
         font: 'bold 22px Playfair Display',
         color: '#2C3E50',
         backgroundColor: '#ffffff',
@@ -173,11 +223,7 @@ export class ConventionCenterScene extends Phaser.Scene {
     });
 
     exitBtn.on('pointerdown', () => {
-      eventBus.emit('exited-building', {});
-      this.cameraController.fadeOut(500);
-      this.time.delayedCall(500, () => {
-        this.scene.start('CityMapScene');
-      });
+      this.exitBuilding();
     });
 
     // POI info panel (initially hidden)
@@ -227,46 +273,54 @@ export class ConventionCenterScene extends Phaser.Scene {
       .setDepth(100);
   }
 
-  private createFloorLayout(floor: number): void {
+  private createFloorLayout(_floor: number): void {
     // Clear existing POIs via POIManager
     this.poiManager.clearAll();
 
-    // Create rooms based on floor
-    switch (floor) {
-      case 1:
-        this.createRoom(200, 200, 400, 300, 'Main Hall', 0x2a9d8f);
-        this.createRoom(700, 200, 300, 200, 'Registration', 0xe9c46a);
-        this.createRoom(1100, 200, 300, 300, 'Exhibit Hall A', 0xf4a261);
+    // Create rooms from floor configuration
+    const rooms = this.floorConfig.rooms || [];
+    for (const room of rooms) {
+      this.createRoom(
+        room.bounds.x,
+        room.bounds.y,
+        room.bounds.width,
+        room.bounds.height,
+        room.name,
+        room.color
+      );
 
-        // POIs for Floor 1
-        this.registerPOI('main-stage', 400, 350, 'Main Stage', POIType.SESSION, 1);
-        this.registerPOI('check-in-desk', 850, 300, 'Check-in Desk', POIType.INFO, 1);
-        this.registerPOI('sponsor-booth-a', 1250, 350, 'Sponsor Booth A', POIType.SPONSOR, 1);
-        this.registerPOI('coffee-bar', 400, 600, 'Coffee Bar', POIType.FOOD, 1);
-        break;
+      // Register a POI at the center of each room
+      const poiType = this.getRoomPOIType(room.type);
+      const centerX = room.bounds.x + room.bounds.width / 2;
+      const centerY = room.bounds.y + room.bounds.height / 2;
+      this.registerPOI(
+        room.id,
+        centerX,
+        centerY,
+        room.name,
+        poiType,
+        this.currentFloor
+      );
+    }
+  }
 
-      case 2:
-        this.createRoom(200, 200, 350, 350, 'Breakout Room A', 0x457b9d);
-        this.createRoom(650, 200, 350, 350, 'Breakout Room B', 0x2a9d8f);
-        this.createRoom(1100, 200, 300, 350, 'Networking Lounge', 0xe9c46a);
-
-        // POIs for Floor 2
-        this.registerPOI('workshop-2a', 375, 375, 'Workshop 2A', POIType.SESSION, 2);
-        this.registerPOI('workshop-2b', 825, 375, 'Workshop 2B', POIType.SESSION, 2);
-        this.registerPOI('lounge-seating', 1250, 375, 'Lounge Seating', POIType.SOCIAL, 2);
-        this.registerPOI('refreshments', 500, 700, 'Refreshments', POIType.FOOD, 2);
-        break;
-
-      case 3:
-        this.createRoom(200, 200, 500, 400, 'Conference Hall', 0x2a9d8f);
-        this.createRoom(800, 200, 300, 250, 'VIP Lounge', 0xe76f51);
-        this.createRoom(1150, 200, 250, 250, 'Green Room', 0xe9c46a);
-
-        // POIs for Floor 3
-        this.registerPOI('keynote-stage', 450, 400, 'Keynote Stage', POIType.SESSION, 3);
-        this.registerPOI('vip-area', 950, 325, 'VIP Area', POIType.SOCIAL, 3);
-        this.registerPOI('speaker-prep', 1275, 325, 'Speaker Prep', POIType.INFO, 3);
-        break;
+  /**
+   * Map room type to POI type
+   */
+  private getRoomPOIType(roomType?: string): POIType {
+    switch (roomType) {
+      case 'session':
+        return POIType.SESSION;
+      case 'exhibit':
+        return POIType.SPONSOR;
+      case 'networking':
+        return POIType.SOCIAL;
+      case 'food':
+        return POIType.FOOD;
+      case 'service':
+        return POIType.INFO;
+      default:
+        return POIType.INFO;
     }
   }
 
@@ -321,31 +375,71 @@ export class ConventionCenterScene extends Phaser.Scene {
 
   private handleFloorChange(floor: unknown): void {
     if (typeof floor === 'number' && !this.isTransitioning) {
+      // Get the new floor config
+      const newFloorConfig = getFloorConfig(
+        this.currentVenueId,
+        this.currentIndoorVenueId,
+        floor
+      );
+      if (!newFloorConfig) {
+        console.warn(`Floor ${floor} not found for venue ${this.currentIndoorVenueId}`);
+        return;
+      }
+
       this.isTransitioning = true;
       this.currentFloor = floor;
+      this.floorConfig = newFloorConfig;
+
+      // Update world bounds
+      this.worldWidth = newFloorConfig.worldBounds.width;
+      this.worldHeight = newFloorConfig.worldBounds.height;
 
       // Animate floor transition
       this.cameraController.fadeOut(300);
 
       this.time.delayedCall(300, () => {
+        // Update physics world bounds
+        this.physics.world.setBounds(0, 0, this.worldWidth, this.worldHeight);
+
         // Update floor text
-        this.floorText.setText(`Convention Center - Floor ${this.currentFloor}`);
+        this.floorText.setText(`${this.indoorVenueConfig.displayName} - Floor ${this.currentFloor}`);
 
         // Recreate floor layout
         this.createFloorLayout(this.currentFloor);
 
-        // Reset player position
-        this.player.setPosition(this.worldWidth / 2, this.worldHeight / 2);
+        // Reset player position to floor spawn point
+        this.player.setPosition(
+          this.floorConfig.spawnPoint.x,
+          this.floorConfig.spawnPoint.y
+        );
+
+        // Update camera bounds
+        this.cameraController.setBounds(0, 0, this.worldWidth, this.worldHeight);
 
         // Fade back in
         this.cameraController.fadeIn(300);
 
         this.time.delayedCall(300, () => {
           this.isTransitioning = false;
-          eventBus.emit('floor-changed', { floor: this.currentFloor });
+          eventBus.emit('floor-changed', {
+            floor: this.currentFloor,
+            venueId: this.currentVenueId,
+            indoorVenueId: this.currentIndoorVenueId,
+          });
         });
       });
     }
+  }
+
+  /**
+   * Exit the building and return to the outdoor map
+   */
+  private exitBuilding(): void {
+    eventBus.emit('exited-building', { venueId: this.currentVenueId });
+    this.cameraController.fadeOut(500);
+    this.time.delayedCall(500, () => {
+      this.scene.start('CityMapScene', { venueId: this.currentVenueId });
+    });
   }
 
   update(time: number, _delta: number): void {

@@ -1,3 +1,5 @@
+import { VenueId } from '../types/venue';
+
 type EventCallback = (...args: unknown[]) => void;
 
 class EventBus {
@@ -34,12 +36,24 @@ export interface GameEvents {
   'poi-hover-end': { poiId: string; poiData: unknown; timestamp: number };
   'poi-proximity': { poiId: string; poiData: unknown; distance: number; timestamp: number };
   'poi-interaction': { poiId: string; poiData: unknown; timestamp: number; interactionType: string };
+  'poi-panel-close': Record<string, never>;
   'navigate-to-poi': { poiId: string; position: { x: number; y: number } };
-  'floor-changed': { floor: number };
-  'entered-building': { building: string; floors: number[]; currentFloor: number };
-  'exited-building': Record<string, never>;
+  'venue-selected': { venueId: VenueId };
+  'venue-changed': { venueId: VenueId };
+  'floor-changed': { floor: number; venueId: VenueId; indoorVenueId: string };
+  'entered-building': {
+    building?: string;
+    venueId: VenueId;
+    indoorVenueId?: string;
+    floors?: number[];
+    floor?: number;
+    currentFloor?: number;
+    displayName?: string;
+    totalFloors?: number;
+  };
+  'exited-building': { venueId: VenueId };
   'switch-floor': number;
-  'player-moved': { x: number; y: number; zone: string };
+  'player-moved': { x: number; y: number; zone: string; venueId?: VenueId };
   'presence-update': { users: UserPresence[] };
   'attendee-selected': { uid: string };
   'send-wave': { toUid: string; fromUid?: string; timestamp?: number };
@@ -47,6 +61,8 @@ export interface GameEvents {
   'attendee-focused': { uid: string };
   'toggle-attendee-markers': { visible: boolean };
   'cluster-expanded': { attendees: UserPresence[] };
+  'action-button-pressed': Record<string, never>;
+  'menu-button-pressed': Record<string, never>;
 }
 
 export interface UserPresence {

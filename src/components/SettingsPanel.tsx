@@ -1,6 +1,8 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, MapPin, LogOut, Settings } from 'lucide-react';
+import { X, MapPin, LogOut, Settings, Building2 } from 'lucide-react';
+import { VenueId } from '../types/venue';
+import { VenueSelector, getVenueDisplayName } from './VenueSelector';
 
 interface SettingsPanelProps {
   isOpen: boolean;
@@ -9,6 +11,8 @@ interface SettingsPanelProps {
   onLocationToggle: (share: boolean) => void;
   displayName: string;
   onSignOut: () => void;
+  currentVenue?: VenueId;
+  onVenueChange?: (venueId: VenueId) => void;
 }
 
 export function SettingsPanel({
@@ -18,9 +22,12 @@ export function SettingsPanel({
   onLocationToggle,
   displayName,
   onSignOut,
+  currentVenue,
+  onVenueChange,
 }: SettingsPanelProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const [showVenueChange, setShowVenueChange] = useState(false);
 
   // Handle Escape key to close
   const handleKeyDown = useCallback(
@@ -63,6 +70,9 @@ export function SettingsPanel({
       return () => {
         document.removeEventListener('keydown', handleKeyDown);
       };
+    } else {
+      // Reset venue change state when panel closes
+      setShowVenueChange(false);
     }
   }, [isOpen, handleKeyDown]);
 
@@ -155,6 +165,51 @@ export function SettingsPanel({
                 </button>
               </div>
             </div>
+
+            {/* Venue Selection */}
+            {currentVenue && onVenueChange && (
+              <div className="border-t border-ink/10 pt-4 mt-4">
+                <div className="flex items-start gap-3 mb-3">
+                  <Building2 className="w-5 h-5 text-teal-600 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-semibold text-ink">Conference venue</p>
+                    {!showVenueChange ? (
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-sm text-ink/60">
+                          {getVenueDisplayName(currentVenue)}
+                        </span>
+                        <button
+                          onClick={() => setShowVenueChange(true)}
+                          className="text-teal-600 hover:text-teal-700 text-sm font-medium focus:outline-none focus:underline"
+                        >
+                          Change
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="mt-3">
+                        <VenueSelector
+                          currentVenue={currentVenue}
+                          onSelectVenue={(venueId) => {
+                            onVenueChange(venueId);
+                            setShowVenueChange(false);
+                          }}
+                          compact={true}
+                        />
+                        <button
+                          onClick={() => setShowVenueChange(false)}
+                          className="mt-2 text-sm text-ink/50 hover:text-ink/70 focus:outline-none focus:underline"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+                    <p className="text-xs text-ink/50 mt-2">
+                      Changing venues will update the map and reset your location.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Divider */}
             <div className="border-t border-ink/10 my-6" />

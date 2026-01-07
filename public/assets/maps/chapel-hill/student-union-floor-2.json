@@ -1,0 +1,38 @@
+{
+  "version": "1.10",
+  "tiledversion": "1.10.2",
+  "orientation": "isometric",
+  "renderorder": "right-up",
+  "width": 30,
+  "height": 22,
+  "tilewidth": 64,
+  "tileheight": 32,
+  "layers": [
+    {
+      "name": "ground",
+      "type": "tilelayer",
+      "visible": true,
+      "data": []
+    },
+    {
+      "name": "pois",
+      "type": "objectgroup",
+      "visible": true,
+      "objects": []
+    },
+    {
+      "name": "spawns",
+      "type": "objectgroup",
+      "visible": true,
+      "objects": [
+        {
+          "name": "spawn",
+          "type": "spawn",
+          "x": 480,
+          "y": 352
+        }
+      ]
+    }
+  ],
+  "tilesets": []
+}

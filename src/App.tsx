@@ -10,9 +10,11 @@ import { ConsentModal } from './components/ConsentModal';
 import { SettingsPanel } from './components/SettingsPanel';
 import { TouchUI } from './components/TouchUI';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { VenueSelector } from './components/VenueSelector';
 import { usePresence } from './hooks/usePresence';
 import { useOffline } from './hooks/useOffline';
 import { eventBus } from './lib/EventBus';
+import { VenueId } from './types/venue';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -45,6 +47,12 @@ function BeatStreetApp() {
   const [error, setError] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const { isOnline } = useOffline();
+
+  // Venue selection state
+  const [selectedVenue, setSelectedVenue] = useState<VenueId | null>(() => {
+    const cached = localStorage.getItem('beat-street-venue');
+    return cached ? (cached as VenueId) : null;
+  });
 
   // Detect mobile device
   useEffect(() => {
@@ -193,6 +201,28 @@ function BeatStreetApp() {
     localStorage.setItem('location-consent', share ? 'true' : 'false');
   };
 
+  // Venue selection handler (initial selection)
+  const handleVenueSelect = (venueId: VenueId) => {
+    setSelectedVenue(venueId);
+    localStorage.setItem('beat-street-venue', venueId);
+    // Emit event to Phaser to load venue
+    eventBus.emit('venue-selected', { venueId });
+  };
+
+  // Venue change handler (from settings panel)
+  const handleVenueChange = (venueId: VenueId) => {
+    setSelectedVenue(venueId);
+    localStorage.setItem('beat-street-venue', venueId);
+    eventBus.emit('venue-changed', { venueId });
+  };
+
+  // Emit venue-selected on initial load when venue is already selected
+  useEffect(() => {
+    if (selectedVenue && attendee && !showConsentModal) {
+      eventBus.emit('venue-selected', { venueId: selectedVenue });
+    }
+  }, [selectedVenue, attendee, showConsentModal]);
+
   // Loading state
   if (authLoading) {
     return (
@@ -274,6 +304,18 @@ function BeatStreetApp() {
     );
   }
 
+  // Show venue selector if no venue selected (after consent is handled)
+  if (!selectedVenue && !showConsentModal) {
+    return (
+      <div className="h-full w-full bg-cream">
+        <VenueSelector
+          currentVenue={selectedVenue ?? undefined}
+          onSelectVenue={handleVenueSelect}
+        />
+      </div>
+    );
+  }
+
   // Verified attendee - show the app
   return (
     <div className="h-full w-full relative bg-cream">
@@ -315,6 +357,8 @@ function BeatStreetApp() {
         onLocationToggle={handleLocationToggle}
         displayName={attendee.displayName}
         onSignOut={handleSignOut}
+        currentVenue={selectedVenue ?? undefined}
+        onVenueChange={handleVenueChange}
       />
     </div>
   );

@@ -1,5 +1,7 @@
 // POI Type definitions for Beat Street
 
+import { VenueId } from './venue';
+
 export enum POIType {
   SESSION = 'session',
   SPONSOR = 'sponsor',
@@ -14,6 +16,8 @@ export interface POIPosition {
   y: number;
   floor?: number;
   zone?: string;
+  venueId?: VenueId;
+  mapId?: string; // 'outdoor' or indoor venue ID
 }
 
 export interface POIData {
@@ -26,6 +30,8 @@ export interface POIData {
   metadata?: Record<string, unknown>;
   isActive?: boolean;
   isPulsing?: boolean;
+  venueId?: VenueId;
+  mapId?: string; // 'outdoor' or indoor venue ID like 'convention-center'
 }
 
 export interface SessionPOI extends POIData {

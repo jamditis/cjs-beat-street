@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { POI } from '../entities/POI';
 import { POIData, POIType, POIFilter } from '../../types/poi';
+import { VenueId } from '../../types/venue';
 import { eventBus } from '../../lib/EventBus';
 
 export interface POIManagerConfig {
@@ -126,6 +127,24 @@ export class POIManager {
    */
   public getPOIsByZone(zone: string): POI[] {
     return this.getAllPOIs().filter((poi) => poi.data.position.zone === zone);
+  }
+
+  /**
+   * Get POIs filtered by venue
+   */
+  public getPOIsByVenue(venueId: VenueId): POI[] {
+    return Array.from(this.pois.values()).filter(
+      (poi) => poi.data.venueId === venueId
+    );
+  }
+
+  /**
+   * Get POIs filtered by venue and map
+   */
+  public getPOIsByVenueAndMap(venueId: VenueId, mapId: string): POI[] {
+    return Array.from(this.pois.values()).filter(
+      (poi) => poi.data.venueId === venueId && poi.data.mapId === mapId
+    );
   }
 
   /**
@@ -291,23 +310,45 @@ export class POIManager {
   }
 
   /**
-   * Load POIs from Firestore (placeholder for Firebase integration)
+   * Load POIs from Firestore with venue/floor filtering
    */
-  public async loadFromFirestore(collection: string = 'poi'): Promise<void> {
-    // This is a placeholder for future Firestore integration
-    // In a real implementation, this would:
-    // 1. Query the Firestore collection
-    // 2. Transform documents to POIData format
-    // 3. Register each POI
-    console.log(`POI Firestore loading from ${collection} - To be implemented`);
+  public async loadFromFirestore(options: {
+    collection?: string;
+    venueId: VenueId;
+    mapId: string; // 'outdoor' or indoor venue ID
+    floor?: number;
+  }): Promise<void> {
+    const { collection: collectionName = 'poi', venueId, mapId, floor } = options;
 
-    // Example structure:
-    // const db = getFirestore();
-    // const snapshot = await getDocs(collection(db, collection));
-    // snapshot.forEach((doc) => {
-    //   const data = doc.data() as POIData;
-    //   this.registerPOI(data);
-    // });
+    try {
+      const { getFirestore, collection, query, where, getDocs } = await import('firebase/firestore');
+      const db = getFirestore();
+
+      // Build query with venue and map filters
+      let q = query(
+        collection(db, collectionName),
+        where('venueId', '==', venueId),
+        where('mapId', '==', mapId)
+      );
+
+      // Add floor filter if specified
+      if (floor !== undefined) {
+        q = query(q, where('floor', '==', floor));
+      }
+
+      const snapshot = await getDocs(q);
+      snapshot.forEach((doc) => {
+        const data = doc.data() as POIData;
+        // Ensure the POI has required fields
+        if (data.id && data.type && data.name && data.position) {
+          this.registerPOI(data);
+        }
+      });
+
+      console.log(`Loaded ${snapshot.size} POIs for venue=${venueId}, map=${mapId}, floor=${floor ?? 'all'}`);
+    } catch (error) {
+      console.error('Failed to load POIs from Firestore:', error);
+    }
   }
 
   /**

@@ -6,6 +6,15 @@ import { InputManager } from '../systems/InputManager';
 import { PresenceManager } from '../systems/PresenceManager';
 import { POIManager } from '../systems/POIManager';
 import { POIType, POIData } from '../../types/poi';
+import { VenueId, VenueConfig } from '../../types/venue';
+import { getVenueConfig, getDefaultVenue } from '../../config/venues';
+
+/**
+ * Scene initialization data for CityMapScene
+ */
+export interface CityMapSceneData {
+  venueId?: VenueId;
+}
 
 export class CityMapScene extends Phaser.Scene {
   private player!: Player;
@@ -13,11 +22,15 @@ export class CityMapScene extends Phaser.Scene {
   private inputManager!: InputManager;
   private presenceManager!: PresenceManager;
   private poiManager!: POIManager;
-  private currentZone = 'downtown';
+  private currentZone = 'outdoor';
 
-  // World bounds
-  private readonly worldWidth = 2400;
-  private readonly worldHeight = 1800;
+  // Venue configuration (data-driven)
+  private currentVenueId!: VenueId;
+  private venueConfig!: VenueConfig;
+
+  // World bounds (set from venue config in init)
+  private worldWidth = 2400;
+  private worldHeight = 1800;
 
   // Position update throttling
   private lastPositionUpdate = 0;
@@ -30,9 +43,32 @@ export class CityMapScene extends Phaser.Scene {
   // Event listener cleanup (initialized in setupEventHandlers, used in shutdown)
   private unsubscribeActionButton!: () => void;
   private unsubscribeNavigateToPOI!: () => void;
+  private unsubscribeVenueChanged!: () => void;
 
   constructor() {
     super({ key: 'CityMapScene' });
+  }
+
+  /**
+   * Initialize scene with venue configuration
+   */
+  init(data?: CityMapSceneData): void {
+    this.currentVenueId = data?.venueId || VenueId.PITTSBURGH;
+    const config = getVenueConfig(this.currentVenueId);
+    if (!config) {
+      console.error(`Venue not found: ${this.currentVenueId}, using default`);
+      this.venueConfig = getDefaultVenue();
+      this.currentVenueId = this.venueConfig.id;
+    } else {
+      this.venueConfig = config;
+    }
+    // Update world dimensions from config
+    this.worldWidth = this.venueConfig.outdoorMap.worldBounds.width;
+    this.worldHeight = this.venueConfig.outdoorMap.worldBounds.height;
+
+    // Set initial zone from config
+    const districts = this.venueConfig.outdoorMap.districts;
+    this.currentZone = districts && districts.length > 0 ? districts[0].id : 'outdoor';
   }
 
   create(): void {
@@ -42,17 +78,19 @@ export class CityMapScene extends Phaser.Scene {
     // Create a larger map background with grid pattern
     this.createMapBackground();
 
-    // Create zones/districts
-    this.createDistricts();
+    // Create zones/districts from config
+    this.createDistrictsFromConfig();
 
     // Create InputManager for unified input handling (keyboard + touch)
     this.inputManager = new InputManager(this);
 
     // Create the player using the Player entity with InputManager
+    // Use spawn point from venue config
+    const spawnPoint = this.venueConfig.outdoorMap.spawnPoint;
     this.player = new Player({
       scene: this,
-      x: this.worldWidth / 2,
-      y: this.worldHeight / 2,
+      x: spawnPoint.x,
+      y: spawnPoint.y,
       color: 0x2a9d8f,
       inputManager: this.inputManager,
     });
@@ -135,15 +173,20 @@ export class CityMapScene extends Phaser.Scene {
     }
   }
 
-  private createDistricts(): void {
-    // Downtown district
-    this.createDistrict(200, 200, 800, 600, 0x2a9d8f, 'Downtown');
-
-    // Cultural district
-    this.createDistrict(1100, 300, 700, 500, 0xe9c46a, 'Cultural District');
-
-    // Waterfront
-    this.createDistrict(300, 1000, 1000, 400, 0x457b9d, 'Waterfront');
+  /**
+   * Create districts from venue configuration
+   */
+  private createDistrictsFromConfig(): void {
+    this.venueConfig.outdoorMap.districts?.forEach((district) => {
+      this.createDistrict(
+        district.bounds.x,
+        district.bounds.y,
+        district.bounds.width,
+        district.bounds.height,
+        district.color,
+        district.name
+      );
+    });
   }
 
   private createDistrict(
@@ -166,85 +209,94 @@ export class CityMapScene extends Phaser.Scene {
       .setOrigin(0.5);
   }
 
+  /**
+   * Create buildings from venue configuration's indoor venues
+   */
   private createBuildings(): void {
-    // Convention Center - Main attraction
-    const conventionCenter = this.add
-      .rectangle(400, 400, 200, 150, 0x2a9d8f, 0.4)
-      .setStrokeStyle(4, 0x2a9d8f)
-      .setInteractive({ useHandCursor: true });
+    const indoorVenues = this.venueConfig.outdoorMap.indoorVenues;
 
-    this.add
-      .text(400, 400, 'Convention\nCenter', {
-        font: 'bold 20px Source Sans 3',
-        color: '#2C3E50',
-        align: 'center',
-      })
-      .setOrigin(0.5);
+    indoorVenues.forEach((venue) => {
+      if (!venue.buildingPosition) {
+        return;
+      }
 
-    // Add hover effect
-    conventionCenter.on('pointerover', () => {
-      conventionCenter.setFillStyle(0x2a9d8f, 0.7);
-    });
+      const { x, y } = venue.buildingPosition;
+      const buildingWidth = 200;
+      const buildingHeight = 150;
+      const color = 0x2a9d8f;
 
-    conventionCenter.on('pointerout', () => {
-      conventionCenter.setFillStyle(0x2a9d8f, 0.4);
-    });
+      const building = this.add
+        .rectangle(x, y, buildingWidth, buildingHeight, color, 0.4)
+        .setStrokeStyle(4, color)
+        .setInteractive({ useHandCursor: true });
 
-    conventionCenter.on('pointerdown', () => {
-      eventBus.emit('entered-building', {
-        building: 'convention-center',
-        floors: [1, 2, 3],
-        currentFloor: 1,
+      // Multi-line display name for building label
+      const displayLines = venue.displayName.split(' ');
+      const labelText = displayLines.length > 2
+        ? displayLines.slice(0, 2).join(' ') + '\n' + displayLines.slice(2).join(' ')
+        : venue.displayName;
+
+      this.add
+        .text(x, y, labelText, {
+          font: 'bold 16px Source Sans 3',
+          color: '#2C3E50',
+          align: 'center',
+        })
+        .setOrigin(0.5);
+
+      // Add hover effect
+      building.on('pointerover', () => {
+        building.setFillStyle(color, 0.7);
       });
-      this.cameraController.fadeOut(500);
-      this.time.delayedCall(500, () => {
-        this.scene.start('ConventionCenterScene');
+
+      building.on('pointerout', () => {
+        building.setFillStyle(color, 0.4);
+      });
+
+      // Click handler for entering building
+      building.on('pointerdown', () => {
+        const floors = venue.floors.map((f) => f.floor);
+        eventBus.emit('entered-building', {
+          building: venue.id,
+          venueId: this.currentVenueId,
+          floors,
+          currentFloor: venue.floors[0].floor,
+        });
+        this.cameraController.fadeOut(500);
+        this.time.delayedCall(500, () => {
+          this.scene.start('ConventionCenterScene', {
+            venueId: this.currentVenueId,
+            indoorVenueId: venue.id,
+            floor: venue.floors[0].floor,
+          });
+        });
       });
     });
-
-    // Additional buildings
-    this.createBuilding(800, 300, 120, 100, 'Tech Hub', 0xe76f51);
-    this.createBuilding(1200, 500, 150, 120, 'Museum', 0xe9c46a);
-    this.createBuilding(600, 1100, 100, 80, 'Marina', 0x457b9d);
-  }
-
-  private createBuilding(
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    name: string,
-    color: number
-  ): void {
-    this.add
-      .rectangle(x, y, width, height, color, 0.3)
-      .setStrokeStyle(2, color);
-
-    this.add
-      .text(x, y, name, {
-        font: '14px Source Sans 3',
-        color: '#2C3E50',
-        align: 'center',
-      })
-      .setOrigin(0.5);
   }
 
   /**
    * Create outdoor POIs for city landmarks using POIManager
+   * Registers indoor venues as POI landmarks for navigation
    */
   private createOutdoorPOIs(): void {
-    // Register district landmarks as POIs
-    // These POIs provide additional interactivity for the city map
+    // Register indoor venues as POI landmarks
+    const indoorVenues = this.venueConfig.outdoorMap.indoorVenues;
 
-    // Downtown landmarks
-    this.registerPOI('tech-hub', 800, 300, 'Tech Hub', POIType.LANDMARK, 'downtown');
-    this.registerPOI('convention-center-poi', 400, 400, 'Convention Center', POIType.LANDMARK, 'downtown');
+    indoorVenues.forEach((venue) => {
+      if (!venue.buildingPosition) {
+        return;
+      }
 
-    // Cultural district landmarks
-    this.registerPOI('museum', 1200, 500, 'Museum', POIType.LANDMARK, 'cultural-district');
-
-    // Waterfront landmarks
-    this.registerPOI('marina', 600, 1100, 'Marina', POIType.LANDMARK, 'waterfront');
+      const { x, y } = venue.buildingPosition;
+      this.registerPOI(
+        `${venue.id}-poi`,
+        x,
+        y,
+        venue.displayName,
+        POIType.LANDMARK,
+        'outdoor'
+      );
+    });
   }
 
   /**
@@ -271,9 +323,9 @@ export class CityMapScene extends Phaser.Scene {
   }
 
   private createUI(): void {
-    // Title - fixed to camera
+    // Title - fixed to camera (uses venue displayName from config)
     this.add
-      .text(20, 20, 'Beat Street: Pittsburgh', {
+      .text(20, 20, `Beat Street: ${this.venueConfig.displayName}`, {
         font: 'bold 24px Playfair Display',
         color: '#2C3E50',
         backgroundColor: '#ffffff',
@@ -390,7 +442,7 @@ export class CityMapScene extends Phaser.Scene {
   }
 
   /**
-   * Setup event handlers for action button and POI navigation
+   * Setup event handlers for action button, POI navigation, and venue changes
    */
   private setupEventHandlers(): void {
     // Handle action button press (mobile) or keyboard interact (desktop)
@@ -398,6 +450,19 @@ export class CityMapScene extends Phaser.Scene {
 
     // Handle navigation to POI request
     this.unsubscribeNavigateToPOI = eventBus.on('navigate-to-poi', this.handleNavigateToPOI.bind(this));
+
+    // Handle venue change - restart scene with new venue config
+    this.unsubscribeVenueChanged = eventBus.on('venue-changed', this.handleVenueChanged.bind(this));
+  }
+
+  /**
+   * Handle venue change event - restart scene with new venue
+   */
+  private handleVenueChanged(data: unknown): void {
+    const venueData = data as { venueId: VenueId };
+    if (venueData && venueData.venueId && venueData.venueId !== this.currentVenueId) {
+      this.scene.restart({ venueId: venueData.venueId });
+    }
   }
 
   /**
@@ -445,6 +510,7 @@ export class CityMapScene extends Phaser.Scene {
     // Cleanup EventBus subscriptions
     this.unsubscribeActionButton?.();
     this.unsubscribeNavigateToPOI?.();
+    this.unsubscribeVenueChanged?.();
 
     // Cleanup CameraController (pointer, keyboard, scale events)
     if (this.cameraController) {
