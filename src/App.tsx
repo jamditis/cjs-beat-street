@@ -1,23 +1,36 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, User } from 'firebase/auth';
 import { Settings, Trophy } from 'lucide-react';
-import { GameContainer } from './components/GameContainer';
-import { POIPanel } from './components/POIPanel';
 import { FloorSelector } from './components/FloorSelector';
 import { PresenceList } from './components/PresenceList';
 import { ConsentModal } from './components/ConsentModal';
-import { SettingsPanel } from './components/SettingsPanel';
 import { TouchUI } from './components/TouchUI';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { VenueSelector } from './components/VenueSelector';
-import { LeaderboardPanel } from './components/LeaderboardPanel';
-import { AttendeeTooltip } from './components/AttendeeTooltip';
-import { AttendeeProfileModal } from './components/AttendeeProfileModal';
 import { usePresence } from './hooks/usePresence';
 import { useOffline } from './hooks/useOffline';
 import { eventBus } from './lib/EventBus';
 import { VenueId } from './types/venue';
+
+// Lazy-loaded components for code splitting
+// GameContainer loads Phaser (~1.1MB) - defer until after auth
+const GameContainer = lazy(() => import('./components/GameContainer').then(m => ({ default: m.GameContainer })));
+const VenueSelector = lazy(() => import('./components/VenueSelector').then(m => ({ default: m.VenueSelector })));
+const SettingsPanel = lazy(() => import('./components/SettingsPanel').then(m => ({ default: m.SettingsPanel })));
+const POIPanel = lazy(() => import('./components/POIPanel').then(m => ({ default: m.POIPanel })));
+const AttendeeCard = lazy(() => import('./components/AttendeeCard').then(m => ({ default: m.AttendeeCard })));
+const LeaderboardPanel = lazy(() => import('./components/LeaderboardPanel').then(m => ({ default: m.LeaderboardPanel })));
+const AttendeeTooltip = lazy(() => import('./components/AttendeeTooltip').then(m => ({ default: m.AttendeeTooltip })));
+const AttendeeProfileModal = lazy(() => import('./components/AttendeeProfileModal').then(m => ({ default: m.AttendeeProfileModal })));
+
+// Loading fallback for lazy components
+function LoadingSpinner() {
+  return (
+    <div className="flex items-center justify-center p-4">
+      <div className="animate-spin rounded-full h-8 w-8 border-4 border-teal-600 border-t-transparent" />
+    </div>
+  );
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -318,10 +331,12 @@ function BeatStreetApp() {
   if (!selectedVenue && !showConsentModal) {
     return (
       <div className="h-full w-full bg-cream">
-        <VenueSelector
-          currentVenue={selectedVenue ?? undefined}
-          onSelectVenue={handleVenueSelect}
-        />
+        <Suspense fallback={<LoadingSpinner />}>
+          <VenueSelector
+            currentVenue={selectedVenue ?? undefined}
+            onSelectVenue={handleVenueSelect}
+          />
+        </Suspense>
       </div>
     );
   }
@@ -357,35 +372,50 @@ function BeatStreetApp() {
       )}
 
       {/* Main game view */}
-      <GameContainer />
+      <Suspense fallback={<LoadingSpinner />}>
+        <GameContainer />
+      </Suspense>
 
       {/* UI Overlays */}
-      <POIPanel />
+      <Suspense fallback={null}>
+        <POIPanel />
+      </Suspense>
       <FloorSelector />
       <PresenceList />
       <TouchUI />
-      <AttendeeTooltip />
+      <Suspense fallback={null}>
+        <AttendeeTooltip />
+      </Suspense>
+      <Suspense fallback={null}>
+        <AttendeeCard />
+      </Suspense>
 
       {/* Modals */}
       {showConsentModal && <ConsentModal onConsent={handleConsent} />}
-      <AttendeeProfileModal />
-      <SettingsPanel
-        isOpen={showSettingsPanel}
-        onClose={() => setShowSettingsPanel(false)}
-        shareLocation={shareLocation}
-        onLocationToggle={handleLocationToggle}
-        displayName={attendee.displayName}
-        onSignOut={handleSignOut}
-        currentVenue={selectedVenue ?? undefined}
-        onVenueChange={handleVenueChange}
-      />
-      <LeaderboardPanel
-        isOpen={showLeaderboardPanel}
-        onClose={() => setShowLeaderboardPanel(false)}
-        userId={attendee.uid}
-        displayName={attendee.displayName}
-        photoURL={attendee.photoURL}
-      />
+      <Suspense fallback={null}>
+        <AttendeeProfileModal />
+      </Suspense>
+      <Suspense fallback={null}>
+        <SettingsPanel
+          isOpen={showSettingsPanel}
+          onClose={() => setShowSettingsPanel(false)}
+          shareLocation={shareLocation}
+          onLocationToggle={handleLocationToggle}
+          displayName={attendee.displayName}
+          onSignOut={handleSignOut}
+          currentVenue={selectedVenue ?? undefined}
+          onVenueChange={handleVenueChange}
+        />
+      </Suspense>
+      <Suspense fallback={null}>
+        <LeaderboardPanel
+          isOpen={showLeaderboardPanel}
+          onClose={() => setShowLeaderboardPanel(false)}
+          userId={attendee.uid}
+          displayName={attendee.displayName}
+          photoURL={attendee.photoURL}
+        />
+      </Suspense>
     </div>
   );
 }

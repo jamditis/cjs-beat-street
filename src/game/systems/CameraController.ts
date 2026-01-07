@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { eventBus } from '../../lib/EventBus';
 
 export interface CameraConfig {
   camera: Phaser.Cameras.Scene2D.Camera;
@@ -41,6 +42,12 @@ export class CameraController {
   // Track if destroyed to prevent double cleanup
   private isDestroyed = false;
 
+  // Double-tap zoom settings
+  private readonly doubleTapZoomAmount = 0.5;
+
+  // Event bus unsubscribe functions
+  private eventUnsubscribers: Array<() => void> = [];
+
   constructor(scene: Phaser.Scene, config: CameraConfig) {
     this.scene = scene;
     this.camera = config.camera;
@@ -63,10 +70,51 @@ export class CameraController {
     // Setup pinch-to-zoom for mobile
     this.setupPinchZoom();
 
+    // Setup double-tap zoom from React UI
+    this.setupDoubleTapZoom();
+
     // Setup deadzone for smoother following
     if (config.deadzone) {
       this.camera.setDeadzone(config.deadzone.width, config.deadzone.height);
     }
+  }
+
+  private setupDoubleTapZoom(): void {
+    const unsubscribe = eventBus.on('double-tap-zoom', (data: unknown) => {
+      const { x, y, direction } = data as { x: number; y: number; direction: 'in' | 'out' };
+
+      // Convert screen coordinates to world coordinates for zoom center
+      const worldPoint = this.camera.getWorldPoint(x, y);
+
+      if (direction === 'in') {
+        this.zoomToPoint(worldPoint.x, worldPoint.y, this.currentZoom + this.doubleTapZoomAmount);
+      } else {
+        this.zoomToPoint(worldPoint.x, worldPoint.y, this.currentZoom - this.doubleTapZoomAmount);
+      }
+    });
+
+    this.eventUnsubscribers.push(unsubscribe);
+  }
+
+  /**
+   * Zoom to a specific point, keeping that point centered
+   */
+  zoomToPoint(worldX: number, worldY: number, targetZoom: number): void {
+    const newZoom = Phaser.Math.Clamp(targetZoom, this.minZoom, this.maxZoom);
+
+    // Smoothly pan to the point while zooming
+    this.scene.tweens.add({
+      targets: this,
+      currentZoom: newZoom,
+      duration: 200,
+      ease: 'Sine.easeOut',
+      onUpdate: () => {
+        this.camera.setZoom(this.currentZoom);
+      },
+    });
+
+    // Pan camera to center on the tap point
+    this.camera.pan(worldX, worldY, 200, 'Sine.easeOut');
   }
 
   private setupZoomControls(): void {
@@ -310,5 +358,9 @@ export class CameraController {
 
     // Remove scale resize listener
     this.scene.scale.off('resize', this.updateJoystickZone, this);
+
+    // Unsubscribe from event bus
+    this.eventUnsubscribers.forEach((unsub) => unsub());
+    this.eventUnsubscribers = [];
   }
 }

@@ -78,6 +78,11 @@ export interface GameEvents {
     method: string;
     progress: unknown;
   };
+  // Schedule events
+  'schedule-session-selected': { sessionId: string; session: unknown };
+  'schedule-navigate-to-session': { sessionId: string; room?: string };
+  'schedule-event': { sessionId: string; session: unknown; action: string };
+  'open-schedule-panel': { room?: string; venueName?: string };
 }
 
 export interface UserPresence {

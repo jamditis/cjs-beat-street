@@ -9,6 +9,7 @@ import {initializeApp, cert, App, getApps} from "firebase-admin/app";
 import {getAuth} from "firebase-admin/auth";
 import {getFirestore, FieldValue} from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
+import {pittsburghPOIs} from "./pittsburgh-pois.js";
 
 // Define the secret (this tells Firebase to inject it at runtime)
 const cjs2026ServiceAccountSecret = defineSecret("CJS2026_SERVICE_ACCOUNT");
@@ -238,6 +239,101 @@ export const verifyAttendee = onRequest({
     res.status(500).json({
       verified: false,
       error: "Verification failed. Please try again.",
+    });
+  }
+});
+
+/**
+ * Seed POI data to Firestore
+ *
+ * This is an admin-only function to populate the POI collection with
+ * Pittsburgh venue data. Call with POST request and admin secret.
+ *
+ * Usage:
+ *   curl -X POST https://REGION-PROJECT.cloudfunctions.net/seedPOIs \
+ *     -H "Content-Type: application/json" \
+ *     -d '{"adminSecret": "YOUR_SECRET", "clearExisting": false}'
+ *
+ * Parameters:
+ *   - adminSecret: Required. Must match ADMIN_SECRET environment variable.
+ *   - clearExisting: Optional. If true, deletes existing POIs before seeding.
+ *
+ * Returns:
+ *   - success: boolean
+ *   - message: status message
+ *   - count: number of POIs seeded
+ */
+export const seedPOIs = onRequest({
+  cors: true,
+  maxInstances: 10,
+  region: "us-central1",
+}, async (req, res) => {
+  // Only allow POST requests
+  if (req.method !== "POST") {
+    res.status(405).json({
+      success: false,
+      error: "Method not allowed. Use POST.",
+    });
+    return;
+  }
+
+  try {
+    const {adminSecret, clearExisting = false} = req.body;
+
+    // Validate admin secret (simple auth for seeding)
+    // In production, use a proper secret manager
+    const expectedSecret = process.env.ADMIN_SECRET || "dev-seed-secret";
+    if (adminSecret !== expectedSecret) {
+      logger.warn("Invalid admin secret provided for seedPOIs");
+      res.status(403).json({
+        success: false,
+        error: "Invalid admin secret",
+      });
+      return;
+    }
+
+    logger.info("Starting POI seeding...");
+
+    // Optionally clear existing POIs
+    if (clearExisting) {
+      logger.info("Clearing existing POIs...");
+      const existingPOIs = await localDb.collection("poi").get();
+      const batch = localDb.batch();
+      existingPOIs.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+      logger.info(`Deleted ${existingPOIs.size} existing POIs`);
+    }
+
+    // Seed Pittsburgh POIs
+    const batch = localDb.batch();
+    let count = 0;
+
+    for (const poi of pittsburghPOIs) {
+      const docRef = localDb.collection("poi").doc(poi.id);
+      batch.set(docRef, {
+        ...poi,
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+      count++;
+    }
+
+    await batch.commit();
+    logger.info(`Seeded ${count} POIs successfully`);
+
+    res.status(200).json({
+      success: true,
+      message: `Successfully seeded ${count} POIs`,
+      count,
+      pois: pittsburghPOIs.map((p) => ({id: p.id, name: p.name, type: p.type})),
+    });
+  } catch (error: unknown) {
+    logger.error("Seeding error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Seeding failed. Check function logs.",
     });
   }
 });
