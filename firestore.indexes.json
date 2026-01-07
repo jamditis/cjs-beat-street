@@ -1,0 +1,51 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "presence",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "zone",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "shareLocation",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "presence",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "shareLocation",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "updatedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "achievements",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "uid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "unlockedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
