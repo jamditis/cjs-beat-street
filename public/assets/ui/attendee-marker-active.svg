@@ -1,7 +1,7 @@
 <svg width="60" height="70" viewBox="0 0 60 70" fill="none" xmlns="http://www.w3.org/2000/svg">
   <!-- Drop shadow -->
   <defs>
-    <filter id="marker-shadow" x="-50%" y="-50%" width="200%" height="200%">
+    <filter id="marker-shadow-active" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
       <feOffset dx="0" dy="2" result="offsetblur"/>
       <feComponentTransfer>
@@ -14,13 +14,22 @@
     </filter>
   </defs>
 
-  <!-- Marker pin shape -->
-  <g filter="url(#marker-shadow)">
+  <!-- Marker pin shape with pulse ring -->
+  <g filter="url(#marker-shadow-active)">
+    <!-- Pulse ring -->
+    <circle cx="30" cy="30" r="32" fill="none" stroke="#2A9D8F" stroke-width="2" opacity="0.4">
+      <animate attributeName="r" values="32;36;32" dur="2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.4;0.1;0.4" dur="2s" repeatCount="indefinite"/>
+    </circle>
+
     <!-- Outer ring -->
     <circle cx="30" cy="30" r="28" fill="#2A9D8F" stroke="#ffffff" stroke-width="3"/>
 
     <!-- Inner circle for avatar -->
     <circle cx="30" cy="30" r="22" fill="#2A9D8F"/>
+
+    <!-- Status indicator (active green) -->
+    <circle cx="44" cy="44" r="8" fill="#10B981" stroke="#ffffff" stroke-width="2"/>
 
     <!-- Pin tail -->
     <path d="M 30 58 L 30 65 L 30 58" stroke="#2A9D8F" stroke-width="4" stroke-linecap="round"/>

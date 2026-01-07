@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, User } from 'firebase/auth';
-import { Settings } from 'lucide-react';
+import { Settings, Trophy } from 'lucide-react';
 import { GameContainer } from './components/GameContainer';
 import { POIPanel } from './components/POIPanel';
 import { FloorSelector } from './components/FloorSelector';
@@ -11,6 +11,9 @@ import { SettingsPanel } from './components/SettingsPanel';
 import { TouchUI } from './components/TouchUI';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { VenueSelector } from './components/VenueSelector';
+import { LeaderboardPanel } from './components/LeaderboardPanel';
+import { AttendeeTooltip } from './components/AttendeeTooltip';
+import { AttendeeProfileModal } from './components/AttendeeProfileModal';
 import { usePresence } from './hooks/usePresence';
 import { useOffline } from './hooks/useOffline';
 import { eventBus } from './lib/EventBus';
@@ -40,6 +43,7 @@ function BeatStreetApp() {
     () => localStorage.getItem('location-consent') === 'true'
   );
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
+  const [showLeaderboardPanel, setShowLeaderboardPanel] = useState(false);
   const [_firebaseUser, setFirebaseUser] = useState<User | null>(null);
   const [attendee, setAttendee] = useState<VerifiedAttendee | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -71,10 +75,16 @@ function BeatStreetApp() {
 
   // Listen for menu button event from TouchUI
   useEffect(() => {
-    const unsubscribe = eventBus.on('menu-button-pressed', () => {
+    const unsubscribeMenu = eventBus.on('menu-button-pressed', () => {
       setShowSettingsPanel(true);
     });
-    return unsubscribe;
+    const unsubscribeLeaderboard = eventBus.on('leaderboard-button-pressed', () => {
+      setShowLeaderboardPanel(true);
+    });
+    return () => {
+      unsubscribeMenu();
+      unsubscribeLeaderboard();
+    };
   }, []);
 
   // Check for cached verification
@@ -326,9 +336,16 @@ function BeatStreetApp() {
         </div>
       )}
 
-      {/* Desktop settings button (hidden on mobile, TouchUI handles it there) */}
+      {/* Desktop controls (hidden on mobile, TouchUI handles it there) */}
       {!isMobile && (
-        <div className="absolute top-4 right-4 z-40">
+        <div className="absolute top-4 right-4 z-40 flex gap-2">
+          <button
+            onClick={() => setShowLeaderboardPanel(true)}
+            className="w-10 h-10 bg-paper/90 backdrop-blur-sm rounded-full shadow-md flex items-center justify-center hover:bg-paper transition-colors focus:outline-none focus:ring-2 focus:ring-teal-600"
+            aria-label="Open leaderboard"
+          >
+            <Trophy className="w-5 h-5 text-teal-600" />
+          </button>
           <button
             onClick={() => setShowSettingsPanel(true)}
             className="w-10 h-10 bg-paper/90 backdrop-blur-sm rounded-full shadow-md flex items-center justify-center hover:bg-paper transition-colors focus:outline-none focus:ring-2 focus:ring-teal-600"
@@ -347,9 +364,11 @@ function BeatStreetApp() {
       <FloorSelector />
       <PresenceList />
       <TouchUI />
+      <AttendeeTooltip />
 
       {/* Modals */}
       {showConsentModal && <ConsentModal onConsent={handleConsent} />}
+      <AttendeeProfileModal />
       <SettingsPanel
         isOpen={showSettingsPanel}
         onClose={() => setShowSettingsPanel(false)}
@@ -359,6 +378,13 @@ function BeatStreetApp() {
         onSignOut={handleSignOut}
         currentVenue={selectedVenue ?? undefined}
         onVenueChange={handleVenueChange}
+      />
+      <LeaderboardPanel
+        isOpen={showLeaderboardPanel}
+        onClose={() => setShowLeaderboardPanel(false)}
+        userId={attendee.uid}
+        displayName={attendee.displayName}
+        photoURL={attendee.photoURL}
       />
     </div>
   );

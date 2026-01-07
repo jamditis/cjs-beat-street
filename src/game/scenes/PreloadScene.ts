@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { eventBus } from '../../lib/EventBus';
+import { PlayerSpriteGenerator, PLAYER_PRESETS } from '../utils/PlayerSpriteGenerator';
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -107,7 +108,36 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   create(): void {
+    // Generate player sprites and animations
+    this.generatePlayerSprites();
+
     eventBus.emit('assets-loaded');
     this.scene.start('CityMapScene');
+  }
+
+  /**
+   * Generate player character sprites with all animations
+   */
+  private generatePlayerSprites(): void {
+    // Get player appearance preference from localStorage
+    const savedPreset = localStorage.getItem('player-appearance');
+    const preset = (savedPreset && savedPreset in PLAYER_PRESETS)
+      ? savedPreset as keyof typeof PLAYER_PRESETS
+      : 'default';
+
+    const appearance = PLAYER_PRESETS[preset];
+
+    // Generate the main player sprite sheet
+    const generator = new PlayerSpriteGenerator({
+      scene: this,
+      shirtColor: appearance.shirtColor,
+      pantsColor: appearance.pantsColor,
+      skinTone: appearance.skinTone,
+    });
+
+    generator.generateSpriteSheet('player');
+    generator.generateShadow('player-shadow');
+
+    console.log(`[PreloadScene] Generated player sprites with '${preset}' appearance`);
   }
 }

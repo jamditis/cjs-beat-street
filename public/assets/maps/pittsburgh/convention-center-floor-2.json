@@ -1,38 +1,1085 @@
 {
-  "version": "1.10",
-  "tiledversion": "1.10.2",
-  "orientation": "isometric",
-  "renderorder": "right-up",
-  "width": 55,
-  "height": 40,
-  "tilewidth": 64,
-  "tileheight": 32,
+  "compressionlevel": -1,
+  "height": 30,
+  "infinite": false,
   "layers": [
     {
+      "data": [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 0,
+        0, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 0,
+        0, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 0,
+        0, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 0,
+        0, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 0,
+        0, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 0,
+        0, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 0,
+        0, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 0,
+        0, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 0,
+        0, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 0,
+        0, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 0,
+        0, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 0,
+        0, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 0,
+        0, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+      ],
+      "height": 30,
       "name": "ground",
+      "opacity": 1,
       "type": "tilelayer",
       "visible": true,
-      "data": []
+      "width": 30,
+      "x": 0,
+      "y": 0
     },
     {
-      "name": "pois",
-      "type": "objectgroup",
-      "visible": true,
-      "objects": []
-    },
-    {
-      "name": "spawns",
-      "type": "objectgroup",
-      "visible": true,
+      "height": 0,
+      "name": "rooms",
       "objects": [
         {
-          "name": "spawn",
-          "type": "spawn",
-          "x": 880,
-          "y": 640
+          "height": 160,
+          "id": 1,
+          "name": "Session Room A",
+          "properties": [
+            {
+              "name": "roomId",
+              "type": "string",
+              "value": "session_room_a"
+            },
+            {
+              "name": "capacity",
+              "type": "int",
+              "value": 80
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 256,
+          "x": 192,
+          "y": 96
+        },
+        {
+          "height": 160,
+          "id": 2,
+          "name": "Session Room B",
+          "properties": [
+            {
+              "name": "roomId",
+              "type": "string",
+              "value": "session_room_b"
+            },
+            {
+              "name": "capacity",
+              "type": "int",
+              "value": 80
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 256,
+          "x": 1344,
+          "y": 96
+        },
+        {
+          "height": 128,
+          "id": 3,
+          "name": "Session Room C",
+          "properties": [
+            {
+              "name": "roomId",
+              "type": "string",
+              "value": "session_room_c"
+            },
+            {
+              "name": "capacity",
+              "type": "int",
+              "value": 60
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 256,
+          "x": 192,
+          "y": 320
+        },
+        {
+          "height": 128,
+          "id": 4,
+          "name": "Session Room D",
+          "properties": [
+            {
+              "name": "roomId",
+              "type": "string",
+              "value": "session_room_d"
+            },
+            {
+              "name": "capacity",
+              "type": "int",
+              "value": 60
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 256,
+          "x": 1344,
+          "y": 320
+        },
+        {
+          "height": 128,
+          "id": 5,
+          "name": "Session Room E",
+          "properties": [
+            {
+              "name": "roomId",
+              "type": "string",
+              "value": "session_room_e"
+            },
+            {
+              "name": "capacity",
+              "type": "int",
+              "value": 50
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 256,
+          "x": 192,
+          "y": 512
+        },
+        {
+          "height": 128,
+          "id": 6,
+          "name": "Session Room F",
+          "properties": [
+            {
+              "name": "roomId",
+              "type": "string",
+              "value": "session_room_f"
+            },
+            {
+              "name": "capacity",
+              "type": "int",
+              "value": 50
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 256,
+          "x": 1344,
+          "y": 512
+        },
+        {
+          "height": 128,
+          "id": 7,
+          "name": "Session Room G",
+          "properties": [
+            {
+              "name": "roomId",
+              "type": "string",
+              "value": "session_room_g"
+            },
+            {
+              "name": "capacity",
+              "type": "int",
+              "value": 100
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 256,
+          "x": 192,
+          "y": 704
+        },
+        {
+          "height": 128,
+          "id": 8,
+          "name": "Session Room H",
+          "properties": [
+            {
+              "name": "roomId",
+              "type": "string",
+              "value": "session_room_h"
+            },
+            {
+              "name": "capacity",
+              "type": "int",
+              "value": 100
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 256,
+          "x": 1344,
+          "y": 704
+        },
+        {
+          "height": 64,
+          "id": 9,
+          "name": "Speaker Green Room",
+          "properties": [
+            {
+              "name": "roomId",
+              "type": "string",
+              "value": "speaker_green_room"
+            },
+            {
+              "name": "capacity",
+              "type": "int",
+              "value": 20
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 192,
+          "x": 832,
+          "y": 832
         }
-      ]
+      ],
+      "opacity": 1,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "height": 0,
+      "name": "pois",
+      "objects": [
+        {
+          "height": 32,
+          "id": 20,
+          "name": "Session: AI & Machine Learning",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "session"
+            },
+            {
+              "name": "poiId",
+              "type": "string",
+              "value": "session_ai_ml"
+            },
+            {
+              "name": "sessionRoom",
+              "type": "string",
+              "value": "A"
+            },
+            {
+              "name": "time",
+              "type": "string",
+              "value": "10:00 AM"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 256,
+          "y": 160
+        },
+        {
+          "height": 32,
+          "id": 21,
+          "name": "Session: Web Performance",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "session"
+            },
+            {
+              "name": "poiId",
+              "type": "string",
+              "value": "session_web_perf"
+            },
+            {
+              "name": "sessionRoom",
+              "type": "string",
+              "value": "B"
+            },
+            {
+              "name": "time",
+              "type": "string",
+              "value": "10:00 AM"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 1408,
+          "y": 160
+        },
+        {
+          "height": 32,
+          "id": 22,
+          "name": "Session: React Best Practices",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "session"
+            },
+            {
+              "name": "poiId",
+              "type": "string",
+              "value": "session_react"
+            },
+            {
+              "name": "sessionRoom",
+              "type": "string",
+              "value": "C"
+            },
+            {
+              "name": "time",
+              "type": "string",
+              "value": "11:30 AM"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 256,
+          "y": 384
+        },
+        {
+          "height": 32,
+          "id": 23,
+          "name": "Session: TypeScript Deep Dive",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "session"
+            },
+            {
+              "name": "poiId",
+              "type": "string",
+              "value": "session_typescript"
+            },
+            {
+              "name": "sessionRoom",
+              "type": "string",
+              "value": "D"
+            },
+            {
+              "name": "time",
+              "type": "string",
+              "value": "11:30 AM"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 1408,
+          "y": 384
+        },
+        {
+          "height": 32,
+          "id": 24,
+          "name": "Session: Node.js Scalability",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "session"
+            },
+            {
+              "name": "poiId",
+              "type": "string",
+              "value": "session_nodejs"
+            },
+            {
+              "name": "sessionRoom",
+              "type": "string",
+              "value": "E"
+            },
+            {
+              "name": "time",
+              "type": "string",
+              "value": "2:00 PM"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 256,
+          "y": 576
+        },
+        {
+          "height": 32,
+          "id": 25,
+          "name": "Session: DevOps Automation",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "session"
+            },
+            {
+              "name": "poiId",
+              "type": "string",
+              "value": "session_devops"
+            },
+            {
+              "name": "sessionRoom",
+              "type": "string",
+              "value": "F"
+            },
+            {
+              "name": "time",
+              "type": "string",
+              "value": "2:00 PM"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 1408,
+          "y": 576
+        },
+        {
+          "height": 32,
+          "id": 26,
+          "name": "Session: GraphQL Workshop",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "session"
+            },
+            {
+              "name": "poiId",
+              "type": "string",
+              "value": "session_graphql"
+            },
+            {
+              "name": "sessionRoom",
+              "type": "string",
+              "value": "G"
+            },
+            {
+              "name": "time",
+              "type": "string",
+              "value": "3:30 PM"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 256,
+          "y": 768
+        },
+        {
+          "height": 32,
+          "id": 27,
+          "name": "Session: Cloud Architecture",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "session"
+            },
+            {
+              "name": "poiId",
+              "type": "string",
+              "value": "session_cloud"
+            },
+            {
+              "name": "sessionRoom",
+              "type": "string",
+              "value": "H"
+            },
+            {
+              "name": "time",
+              "type": "string",
+              "value": "3:30 PM"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 1408,
+          "y": 768
+        },
+        {
+          "height": 32,
+          "id": 28,
+          "name": "Breakout Area North",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "lounge"
+            },
+            {
+              "name": "poiId",
+              "type": "string",
+              "value": "breakout_north"
+            },
+            {
+              "name": "description",
+              "type": "string",
+              "value": "Seating area for informal discussions"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 640,
+          "y": 288
+        },
+        {
+          "height": 32,
+          "id": 29,
+          "name": "Breakout Area Central",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "lounge"
+            },
+            {
+              "name": "poiId",
+              "type": "string",
+              "value": "breakout_central"
+            },
+            {
+              "name": "description",
+              "type": "string",
+              "value": "Comfortable seating with charging stations"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 960,
+          "y": 480
+        },
+        {
+          "height": 32,
+          "id": 30,
+          "name": "Breakout Area South",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "lounge"
+            },
+            {
+              "name": "poiId",
+              "type": "string",
+              "value": "breakout_south"
+            },
+            {
+              "name": "description",
+              "type": "string",
+              "value": "Quiet space with whiteboards"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 640,
+          "y": 672
+        },
+        {
+          "height": 32,
+          "id": 31,
+          "name": "Coffee Station",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "food"
+            },
+            {
+              "name": "poiId",
+              "type": "string",
+              "value": "coffee_station_floor2"
+            },
+            {
+              "name": "description",
+              "type": "string",
+              "value": "Coffee and refreshments"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 960,
+          "y": 64
+        },
+        {
+          "height": 32,
+          "id": 32,
+          "name": "Speaker Lounge",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "lounge"
+            },
+            {
+              "name": "poiId",
+              "type": "string",
+              "value": "speaker_lounge"
+            },
+            {
+              "name": "description",
+              "type": "string",
+              "value": "Private area for speakers to prepare"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 896,
+          "y": 864
+        }
+      ],
+      "opacity": 1,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "height": 0,
+      "name": "transitions",
+      "objects": [
+        {
+          "height": 64,
+          "id": 40,
+          "name": "Elevator 1",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "elevator"
+            },
+            {
+              "name": "targetFloor",
+              "type": "int",
+              "value": 1
+            },
+            {
+              "name": "transitionId",
+              "type": "string",
+              "value": "elevator_1"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 192,
+          "y": 320
+        },
+        {
+          "height": 64,
+          "id": 41,
+          "name": "Elevator 1 (to Floor 3)",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "elevator"
+            },
+            {
+              "name": "targetFloor",
+              "type": "int",
+              "value": 3
+            },
+            {
+              "name": "transitionId",
+              "type": "string",
+              "value": "elevator_1_up"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 192,
+          "y": 384
+        },
+        {
+          "height": 64,
+          "id": 42,
+          "name": "Elevator 2",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "elevator"
+            },
+            {
+              "name": "targetFloor",
+              "type": "int",
+              "value": 1
+            },
+            {
+              "name": "transitionId",
+              "type": "string",
+              "value": "elevator_2"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 1664,
+          "y": 320
+        },
+        {
+          "height": 64,
+          "id": 43,
+          "name": "Elevator 2 (to Floor 3)",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "elevator"
+            },
+            {
+              "name": "targetFloor",
+              "type": "int",
+              "value": 3
+            },
+            {
+              "name": "transitionId",
+              "type": "string",
+              "value": "elevator_2_up"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 1664,
+          "y": 384
+        },
+        {
+          "height": 96,
+          "id": 44,
+          "name": "Stairs North (Down)",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "stairs"
+            },
+            {
+              "name": "targetFloor",
+              "type": "int",
+              "value": 1
+            },
+            {
+              "name": "transitionId",
+              "type": "string",
+              "value": "stairs_north_down"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 960,
+          "y": 64
+        },
+        {
+          "height": 96,
+          "id": 45,
+          "name": "Stairs North (Up)",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "stairs"
+            },
+            {
+              "name": "targetFloor",
+              "type": "int",
+              "value": 3
+            },
+            {
+              "name": "transitionId",
+              "type": "string",
+              "value": "stairs_north_up"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 1024,
+          "y": 64
+        },
+        {
+          "height": 96,
+          "id": 46,
+          "name": "Stairs South (Down)",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "stairs"
+            },
+            {
+              "name": "targetFloor",
+              "type": "int",
+              "value": 1
+            },
+            {
+              "name": "transitionId",
+              "type": "string",
+              "value": "stairs_south_down"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 960,
+          "y": 800
+        },
+        {
+          "height": 96,
+          "id": 47,
+          "name": "Stairs South (Up)",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "stairs"
+            },
+            {
+              "name": "targetFloor",
+              "type": "int",
+              "value": 3
+            },
+            {
+              "name": "transitionId",
+              "type": "string",
+              "value": "stairs_south_up"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 1024,
+          "y": 800
+        }
+      ],
+      "opacity": 1,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "height": 0,
+      "name": "spawns",
+      "objects": [
+        {
+          "height": 0,
+          "id": 50,
+          "name": "from_elevator_1",
+          "properties": [
+            {
+              "name": "spawnId",
+              "type": "string",
+              "value": "from_elevator_1"
+            },
+            {
+              "name": "fromFloor",
+              "type": "int",
+              "value": 1
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 0,
+          "x": 224,
+          "y": 352
+        },
+        {
+          "height": 0,
+          "id": 51,
+          "name": "from_elevator_2",
+          "properties": [
+            {
+              "name": "spawnId",
+              "type": "string",
+              "value": "from_elevator_2"
+            },
+            {
+              "name": "fromFloor",
+              "type": "int",
+              "value": 1
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 0,
+          "x": 1696,
+          "y": 352
+        },
+        {
+          "height": 0,
+          "id": 52,
+          "name": "from_stairs_north",
+          "properties": [
+            {
+              "name": "spawnId",
+              "type": "string",
+              "value": "from_stairs_north"
+            },
+            {
+              "name": "fromFloor",
+              "type": "int",
+              "value": 1
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 0,
+          "x": 992,
+          "y": 128
+        },
+        {
+          "height": 0,
+          "id": 53,
+          "name": "from_stairs_south",
+          "properties": [
+            {
+              "name": "spawnId",
+              "type": "string",
+              "value": "from_stairs_south"
+            },
+            {
+              "name": "fromFloor",
+              "type": "int",
+              "value": 1
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 0,
+          "x": 992,
+          "y": 864
+        },
+        {
+          "height": 0,
+          "id": 54,
+          "name": "from_elevator_1_floor3",
+          "properties": [
+            {
+              "name": "spawnId",
+              "type": "string",
+              "value": "from_elevator_1_floor3"
+            },
+            {
+              "name": "fromFloor",
+              "type": "int",
+              "value": 3
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 0,
+          "x": 224,
+          "y": 416
+        },
+        {
+          "height": 0,
+          "id": 55,
+          "name": "from_elevator_2_floor3",
+          "properties": [
+            {
+              "name": "spawnId",
+              "type": "string",
+              "value": "from_elevator_2_floor3"
+            },
+            {
+              "name": "fromFloor",
+              "type": "int",
+              "value": 3
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 0,
+          "x": 1696,
+          "y": 416
+        },
+        {
+          "height": 0,
+          "id": 56,
+          "name": "from_stairs_north_floor3",
+          "properties": [
+            {
+              "name": "spawnId",
+              "type": "string",
+              "value": "from_stairs_north_floor3"
+            },
+            {
+              "name": "fromFloor",
+              "type": "int",
+              "value": 3
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 0,
+          "x": 1056,
+          "y": 128
+        },
+        {
+          "height": 0,
+          "id": 57,
+          "name": "from_stairs_south_floor3",
+          "properties": [
+            {
+              "name": "spawnId",
+              "type": "string",
+              "value": "from_stairs_south_floor3"
+            },
+            {
+              "name": "fromFloor",
+              "type": "int",
+              "value": 3
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 0,
+          "x": 1056,
+          "y": 864
+        }
+      ],
+      "opacity": 1,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0
     }
   ],
-  "tilesets": []
+  "nextlayerid": 6,
+  "nextobjectid": 58,
+  "orientation": "isometric",
+  "renderorder": "right-up",
+  "tiledversion": "1.10.2",
+  "tileheight": 32,
+  "tilesets": [],
+  "tilewidth": 64,
+  "type": "map",
+  "version": "1.10",
+  "width": 30
 }

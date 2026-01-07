@@ -1,20 +1,21 @@
 import Phaser from 'phaser';
 import { InputManager } from '../systems/InputManager';
+import { PlayerSpriteGenerator, Direction } from '../utils/PlayerSpriteGenerator';
 
 export interface PlayerConfig {
   scene: Phaser.Scene;
   x: number;
   y: number;
-  color?: number;
-  width?: number;
-  height?: number;
   inputManager?: InputManager;
   spriteKey?: string; // Optional: use a preloaded sprite texture instead of generated placeholder
+  playerName?: string; // Display name for the name tag
 }
 
 export class Player {
   private scene: Phaser.Scene;
   public sprite: Phaser.Physics.Arcade.Sprite;
+  private shadow: Phaser.GameObjects.Image;
+  private nameTag: Phaser.GameObjects.Text;
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null;
   private wasdKeys: {
     W: Phaser.Input.Keyboard.Key;
@@ -25,17 +26,19 @@ export class Player {
   private inputManager?: InputManager;
 
   private moveSpeed = 200; // pixels per second
-  private readonly width: number;
-  private readonly height: number;
+  private currentDirection: Direction = 's'; // Default facing south
+  private isWalking = false;
 
   constructor(config: PlayerConfig) {
     this.scene = config.scene;
-    this.width = config.width || 32;
-    this.height = config.height || 48;
     this.inputManager = config.inputManager;
 
-    // Determine which texture to use: preloaded sprite or generated placeholder
-    const textureKey = this.getPlayerTexture(config);
+    // Determine which texture to use: preloaded sprite or default player sprite
+    const textureKey = config.spriteKey || 'player';
+
+    // Create shadow
+    this.shadow = this.scene.add.image(config.x, config.y, 'player-shadow');
+    this.shadow.setDepth(0); // Shadows are always at the bottom
 
     // Create the physics sprite
     this.sprite = this.scene.physics.add.sprite(config.x, config.y, textureKey);
@@ -43,36 +46,31 @@ export class Player {
     this.sprite.setDamping(true);
     this.sprite.setDrag(0.8);
     this.sprite.setMaxVelocity(this.moveSpeed, this.moveSpeed);
+    this.sprite.setDepth(10); // Player above most objects
+
+    // Start with idle animation facing south
+    if (this.scene.anims.exists('player-idle-s')) {
+      this.sprite.play('player-idle-s');
+    }
+
+    // Create name tag
+    const displayName = config.playerName || 'You';
+    this.nameTag = this.scene.add.text(config.x, config.y - 40, displayName, {
+      fontSize: '12px',
+      fontFamily: 'Source Sans 3',
+      color: '#FFFFFF',
+      backgroundColor: '#2C3E50',
+      padding: { x: 6, y: 3 },
+      resolution: 2, // Higher resolution for crisp text
+    });
+    this.nameTag.setOrigin(0.5, 0.5);
+    this.nameTag.setDepth(100); // Name tags always on top
+    this.nameTag.setAlpha(0.9);
 
     // Only setup direct keyboard input if InputManager not provided (backward compatibility)
     if (!this.inputManager) {
       this.setupInput();
     }
-  }
-
-  private getPlayerTexture(config: PlayerConfig): string {
-    // If a sprite key is provided and the texture exists, use it
-    if (config.spriteKey && this.scene.textures.exists(config.spriteKey)) {
-      return config.spriteKey;
-    }
-
-    // Generate a placeholder texture if not already created
-    if (!this.scene.textures.exists('player-placeholder')) {
-      const graphics = this.scene.add.graphics();
-      graphics.fillStyle(config.color || 0x2a9d8f, 1);
-
-      // Draw an isometric-style rectangle (diamond shape for isometric perspective)
-      graphics.fillRect(0, 0, this.width, this.height);
-
-      // Add a simple character indication (head)
-      graphics.fillStyle(0xf4a261, 1);
-      graphics.fillCircle(this.width / 2, 12, 8);
-
-      graphics.generateTexture('player-placeholder', this.width, this.height);
-      graphics.destroy();
-    }
-
-    return 'player-placeholder';
   }
 
   private setupInput(): void {
@@ -137,6 +135,51 @@ export class Player {
       velocity.x * this.moveSpeed,
       velocity.y * this.moveSpeed
     );
+
+    // Update animation based on movement
+    this.updateAnimation(velocity.x, velocity.y);
+
+    // Update shadow and name tag positions
+    this.updateAttachments();
+  }
+
+  /**
+   * Update player animation based on velocity
+   */
+  private updateAnimation(vx: number, vy: number): void {
+    const wasWalking = this.isWalking;
+    this.isWalking = Math.abs(vx) > 0.1 || Math.abs(vy) > 0.1;
+
+    // Update direction if moving
+    if (this.isWalking) {
+      const newDirection = PlayerSpriteGenerator.getDirectionFromVelocity(vx, vy);
+
+      // Only change animation if direction changed or started walking
+      if (newDirection !== this.currentDirection || !wasWalking) {
+        this.currentDirection = newDirection;
+        const animKey = `player-walk-${this.currentDirection}`;
+        if (this.scene.anims.exists(animKey)) {
+          this.sprite.play(animKey, true);
+        }
+      }
+    } else if (wasWalking) {
+      // Just stopped walking, switch to idle
+      const animKey = `player-idle-${this.currentDirection}`;
+      if (this.scene.anims.exists(animKey)) {
+        this.sprite.play(animKey, true);
+      }
+    }
+  }
+
+  /**
+   * Update shadow and name tag positions to follow the player
+   */
+  private updateAttachments(): void {
+    // Shadow follows player position (slightly offset down for isometric perspective)
+    this.shadow.setPosition(this.sprite.x, this.sprite.y + 8);
+
+    // Name tag floats above player
+    this.nameTag.setPosition(this.sprite.x, this.sprite.y - 40);
   }
 
   setInputManager(inputManager: InputManager): void {
@@ -155,9 +198,12 @@ export class Player {
 
   setPosition(x: number, y: number): void {
     this.sprite.setPosition(x, y);
+    this.updateAttachments();
   }
 
   destroy(): void {
+    this.shadow.destroy();
+    this.nameTag.destroy();
     this.sprite.destroy();
   }
 
@@ -166,5 +212,26 @@ export class Player {
       ? Math.abs((this.sprite.body as Phaser.Physics.Arcade.Body).velocity.x) > 0.1 ||
         Math.abs((this.sprite.body as Phaser.Physics.Arcade.Body).velocity.y) > 0.1
       : false;
+  }
+
+  /**
+   * Update the player's display name
+   */
+  setPlayerName(name: string): void {
+    this.nameTag.setText(name);
+  }
+
+  /**
+   * Get current player direction
+   */
+  getDirection(): Direction {
+    return this.currentDirection;
+  }
+
+  /**
+   * Show or hide the name tag
+   */
+  setNameTagVisible(visible: boolean): void {
+    this.nameTag.setVisible(visible);
   }
 }

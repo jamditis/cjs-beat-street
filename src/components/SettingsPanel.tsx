@@ -1,8 +1,10 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, MapPin, LogOut, Settings, Building2 } from 'lucide-react';
+import { X, MapPin, LogOut, Settings, Building2, Award, User } from 'lucide-react';
 import { VenueId } from '../types/venue';
 import { VenueSelector, getVenueDisplayName } from './VenueSelector';
+import { getPlayerAppearance, setPlayerAppearance, getAvailablePresets } from '../utils/playerCustomization';
+import { eventBus } from '../lib/EventBus';
 
 interface SettingsPanelProps {
   isOpen: boolean;
@@ -13,6 +15,8 @@ interface SettingsPanelProps {
   onSignOut: () => void;
   currentVenue?: VenueId;
   onVenueChange?: (venueId: VenueId) => void;
+  totalBadges?: number;
+  onViewBadges?: () => void;
 }
 
 export function SettingsPanel({
@@ -24,10 +28,14 @@ export function SettingsPanel({
   onSignOut,
   currentVenue,
   onVenueChange,
+  totalBadges,
+  onViewBadges,
 }: SettingsPanelProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [showVenueChange, setShowVenueChange] = useState(false);
+  const [playerAppearance, setPlayerAppearanceState] = useState(() => getPlayerAppearance());
+  const availablePresets = getAvailablePresets();
 
   // Handle Escape key to close
   const handleKeyDown = useCallback(
@@ -79,6 +87,14 @@ export function SettingsPanel({
   const handleSignOut = () => {
     onSignOut();
     onClose();
+  };
+
+  const handleAppearanceChange = (preset: string) => {
+    setPlayerAppearanceState(preset as typeof playerAppearance);
+    setPlayerAppearance(preset as typeof playerAppearance);
+
+    // Notify the game to reload player sprites
+    eventBus.emit('player-appearance-changed', { preset });
   };
 
   return (
@@ -165,6 +181,74 @@ export function SettingsPanel({
                 </button>
               </div>
             </div>
+
+            {/* Player Appearance */}
+            <div className="border-t border-ink/10 pt-4 mt-4">
+              <div className="flex items-start gap-3 mb-3">
+                <User className="w-5 h-5 text-teal-600 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-semibold text-ink">Player appearance</p>
+                  <p className="text-sm text-ink/60 mb-3">
+                    Choose your character's outfit color
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {availablePresets.map((preset) => (
+                      <button
+                        key={preset.key}
+                        onClick={() => handleAppearanceChange(preset.key)}
+                        className={`relative p-3 rounded-lg border-2 transition-all focus:outline-none focus:ring-2 focus:ring-teal-600 ${
+                          playerAppearance === preset.key
+                            ? 'border-teal-600 bg-teal-50'
+                            : 'border-ink/10 hover:border-ink/30 hover:bg-cream'
+                        }`}
+                        aria-label={`Select ${preset.label} appearance`}
+                        aria-pressed={playerAppearance === preset.key}
+                      >
+                        <div className="flex flex-col items-center gap-1">
+                          <div
+                            className="w-8 h-8 rounded-full border-2 border-ink/10"
+                            style={{ backgroundColor: preset.colors.shirtColor }}
+                          />
+                          <span className="text-xs font-medium text-ink">
+                            {preset.label}
+                          </span>
+                        </div>
+                        {playerAppearance === preset.key && (
+                          <div className="absolute top-1 right-1 w-2 h-2 bg-teal-600 rounded-full" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-ink/50 mt-2">
+                    Changes take effect on next map load
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* My Badges Section */}
+            {onViewBadges && (
+              <div className="border-t border-ink/10 pt-4 mt-4">
+                <button
+                  onClick={() => {
+                    onViewBadges();
+                    onClose();
+                  }}
+                  className="w-full flex items-start gap-3 p-3 rounded-lg hover:bg-cream transition-colors focus:outline-none focus:ring-2 focus:ring-teal-600"
+                >
+                  <Award className="w-5 h-5 text-teal-600 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1 text-left">
+                    <p className="font-semibold text-ink">My Badges</p>
+                    <p className="text-sm text-ink/60">
+                      {totalBadges !== undefined ? `${totalBadges} badges earned` : 'View your achievements'}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-teal-100 text-teal-700 font-bold text-sm">
+                    {totalBadges !== undefined ? totalBadges : '0'}
+                  </div>
+                </button>
+              </div>
+            )}
 
             {/* Venue Selection */}
             {currentVenue && onVenueChange && (

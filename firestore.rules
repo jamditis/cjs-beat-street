@@ -58,6 +58,47 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Leaderboard collection
+    // Readable by all authenticated users where optedIn is true
+    // Users can only write their own entry
+    match /leaderboard/{uid} {
+      allow read: if isAuthenticated() &&
+                     (resource.data.optedIn == true || isOwner(uid));
+      allow create: if isOwner(uid) &&
+                       request.resource.data.keys().hasAll(['displayName', 'points', 'badgeCount', 'optedIn', 'updatedAt']) &&
+                       request.resource.data.points is number &&
+                       request.resource.data.badgeCount is number &&
+                       request.resource.data.optedIn is bool &&
+                       request.resource.data.updatedAt is timestamp;
+      allow update: if isOwner(uid) &&
+                       request.resource.data.keys().hasAll(['displayName', 'points', 'badgeCount', 'optedIn', 'updatedAt']) &&
+                       request.resource.data.points is number &&
+                       request.resource.data.badgeCount is number &&
+                       request.resource.data.optedIn is bool &&
+                       request.resource.data.updatedAt is timestamp;
+      allow delete: if isOwner(uid) || isAdmin();
+    }
+
+    // Hunt items collection (scavenger hunt)
+    // Readable by all authenticated, writable only by admin
+    match /hunt_items/{itemId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Hunt progress collection (scavenger hunt)
+    // Readable by all authenticated (for leaderboard)
+    // Writable only by the owner (user can update their own progress)
+    match /hunt_progress/{progressId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+                       request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() &&
+                       resource.data.userId == request.auth.uid &&
+                       request.resource.data.userId == request.auth.uid;
+      allow delete: if isAdmin();
+    }
+
     // App configuration collection
     // Readable by all, writable only by admin
     match /app_config/{docId} {

@@ -85,13 +85,16 @@ export class ConventionCenterScene extends Phaser.Scene {
     // Create InputManager for unified input handling (keyboard + touch)
     this.inputManager = new InputManager(this);
 
+    // Get player display name from localStorage
+    const playerName = this.getPlayerDisplayName();
+
     // Create the player using the Player entity with InputManager
     this.player = new Player({
       scene: this,
       x: this.floorConfig.spawnPoint.x,
       y: this.floorConfig.spawnPoint.y,
-      color: 0x2a9d8f,
       inputManager: this.inputManager,
+      playerName,
     });
 
     // Setup camera controller
@@ -545,5 +548,21 @@ export class ConventionCenterScene extends Phaser.Scene {
     if (this.inputManager) {
       this.inputManager.destroy();
     }
+  }
+
+  /**
+   * Get player display name from localStorage
+   */
+  private getPlayerDisplayName(): string {
+    try {
+      const stored = localStorage.getItem('beat-street-attendee');
+      if (stored) {
+        const data = JSON.parse(stored);
+        return data.displayName || 'You';
+      }
+    } catch (error) {
+      console.warn('[ConventionCenterScene] Failed to get player display name:', error);
+    }
+    return 'You';
   }
 }

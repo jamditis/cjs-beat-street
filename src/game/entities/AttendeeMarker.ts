@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { eventBus } from '../../lib/EventBus';
 
 export interface AttendeeMarkerConfig {
   scene: Phaser.Scene;
@@ -7,22 +8,27 @@ export interface AttendeeMarkerConfig {
   uid: string;
   displayName: string;
   photoURL?: string;
+  organization?: string;
   status: 'active' | 'idle' | 'away';
   onClick?: (uid: string) => void;
+  onHover?: (uid: string, isHovered: boolean) => void;
 }
 
 export class AttendeeMarker {
   private scene: Phaser.Scene;
   private uid: string;
   private displayName: string;
+  private organization?: string;
   private status: 'active' | 'idle' | 'away';
   private onClick?: (uid: string) => void;
+  private onHover?: (uid: string, isHovered: boolean) => void;
 
   // Visual elements
   private container: Phaser.GameObjects.Container;
   private avatar: Phaser.GameObjects.Graphics;
   private avatarImage?: Phaser.GameObjects.Image;
   private statusIndicator: Phaser.GameObjects.Graphics;
+  private pulseRing?: Phaser.GameObjects.Graphics;
   private nameLabel?: Phaser.GameObjects.Text;
   private isHovered = false;
 
@@ -31,13 +37,16 @@ export class AttendeeMarker {
   private targetY: number;
   private currentX: number;
   private currentY: number;
+  private pulseTimer = 0;
 
   constructor(config: AttendeeMarkerConfig) {
     this.scene = config.scene;
     this.uid = config.uid;
     this.displayName = config.displayName;
+    this.organization = config.organization;
     this.status = config.status;
     this.onClick = config.onClick;
+    this.onHover = config.onHover;
     this.targetX = config.x;
     this.targetY = config.y;
     this.currentX = config.x;
@@ -46,6 +55,12 @@ export class AttendeeMarker {
     // Create container for all visual elements
     this.container = this.scene.add.container(config.x, config.y);
     this.container.setDepth(50); // Above most game elements but below UI
+
+    // Create pulse ring for active status
+    if (this.status === 'active') {
+      this.pulseRing = this.scene.add.graphics();
+      this.container.add(this.pulseRing);
+    }
 
     // Create avatar circle
     this.avatar = this.scene.add.graphics();
@@ -179,6 +194,20 @@ export class AttendeeMarker {
         duration: 150,
         ease: 'Back.easeOut',
       });
+
+      // Emit hover event to EventBus
+      eventBus.emit('attendee-hovered', {
+        uid: this.uid,
+        displayName: this.displayName,
+        organization: this.organization,
+        status: this.status,
+        hovered: true,
+      });
+
+      // Call optional hover callback
+      if (this.onHover) {
+        this.onHover(this.uid, true);
+      }
     });
 
     this.container.on('pointerout', () => {
@@ -190,6 +219,17 @@ export class AttendeeMarker {
         duration: 150,
         ease: 'Power2',
       });
+
+      // Emit hover end event
+      eventBus.emit('attendee-hovered', {
+        uid: this.uid,
+        hovered: false,
+      });
+
+      // Call optional hover callback
+      if (this.onHover) {
+        this.onHover(this.uid, false);
+      }
     });
 
     // Click handler
@@ -197,6 +237,15 @@ export class AttendeeMarker {
       if (this.onClick) {
         this.onClick(this.uid);
       }
+
+      // Emit click event to EventBus
+      eventBus.emit('attendee-clicked', {
+        uid: this.uid,
+        displayName: this.displayName,
+        organization: this.organization,
+        status: this.status,
+      });
+
       // Pulse animation on click
       this.scene.tweens.add({
         targets: this.container,
@@ -266,6 +315,17 @@ export class AttendeeMarker {
     if (!this.isHovered && this.status === 'active') {
       const offset = Math.sin(this.scene.time.now / 1000) * 2;
       this.container.y = this.currentY + offset;
+    }
+
+    // Draw pulse ring for active users
+    if (this.pulseRing && this.status === 'active') {
+      this.pulseTimer += 0.02;
+      const scale = 1 + Math.sin(this.pulseTimer) * 0.15;
+      const alpha = 0.4 + Math.sin(this.pulseTimer) * 0.2;
+
+      this.pulseRing.clear();
+      this.pulseRing.lineStyle(2, 0x2a9d8f, alpha);
+      this.pulseRing.strokeCircle(0, 0, 30 * scale);
     }
   }
 

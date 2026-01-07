@@ -87,12 +87,16 @@ export class CityMapScene extends Phaser.Scene {
     // Create the player using the Player entity with InputManager
     // Use spawn point from venue config
     const spawnPoint = this.venueConfig.outdoorMap.spawnPoint;
+
+    // Get player display name from localStorage
+    const playerName = this.getPlayerDisplayName();
+
     this.player = new Player({
       scene: this,
       x: spawnPoint.x,
       y: spawnPoint.y,
-      color: 0x2a9d8f,
       inputManager: this.inputManager,
+      playerName,
     });
 
     // Setup camera controller
@@ -533,5 +537,21 @@ export class CityMapScene extends Phaser.Scene {
     if (this.inputManager) {
       this.inputManager.destroy();
     }
+  }
+
+  /**
+   * Get player display name from localStorage
+   */
+  private getPlayerDisplayName(): string {
+    try {
+      const stored = localStorage.getItem('beat-street-attendee');
+      if (stored) {
+        const data = JSON.parse(stored);
+        return data.displayName || 'You';
+      }
+    } catch (error) {
+      console.warn('[CityMapScene] Failed to get player display name:', error);
+    }
+    return 'You';
   }
 }
