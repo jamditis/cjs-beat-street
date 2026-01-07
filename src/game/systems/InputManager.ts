@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { TouchControls, JoystickVector } from './TouchControls';
+import { eventBus } from '../../lib/EventBus';
 
 export interface MovementVector {
   x: number;
@@ -16,6 +17,8 @@ export class InputManager {
     S: Phaser.Input.Keyboard.Key;
     D: Phaser.Input.Keyboard.Key;
   };
+  private interactKeyE?: Phaser.Input.Keyboard.Key;
+  private interactKeySpace?: Phaser.Input.Keyboard.Key;
   private touchControls: TouchControls;
   private isMobile: boolean;
 
@@ -55,6 +58,19 @@ export class InputManager {
       S: this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S),
       D: this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D),
     };
+
+    // Interact keys (E and Space) for desktop users
+    this.interactKeyE = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
+    this.interactKeySpace = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+
+    // Emit action-button-pressed event when E or Space is pressed
+    this.interactKeyE.on('down', () => {
+      eventBus.emit('action-button-pressed', {});
+    });
+
+    this.interactKeySpace.on('down', () => {
+      eventBus.emit('action-button-pressed', {});
+    });
   }
 
   private getKeyboardVector(): { x: number; y: number } {
@@ -122,6 +138,14 @@ export class InputManager {
   }
 
   public destroy(): void {
+    // Cleanup interact key listeners
+    if (this.interactKeyE) {
+      this.interactKeyE.off('down');
+    }
+    if (this.interactKeySpace) {
+      this.interactKeySpace.off('down');
+    }
+
     this.touchControls.destroy();
   }
 }

@@ -71,6 +71,7 @@ export class TouchControls {
     // Create base circle
     this.joystickBase = this.scene.add.graphics();
     this.joystickBase.setDepth(1000);
+    this.joystickBase.setScrollFactor(0); // Fix to screen, don't move with camera
     this.joystickBase.fillStyle(0x000000, 0.2);
     this.joystickBase.fillCircle(0, 0, this.joystickRadius);
     this.joystickBase.lineStyle(3, 0xffffff, 0.5);
@@ -80,6 +81,7 @@ export class TouchControls {
     // Create thumb circle
     this.joystickThumb = this.scene.add.graphics();
     this.joystickThumb.setDepth(1001);
+    this.joystickThumb.setScrollFactor(0); // Fix to screen, don't move with camera
     this.joystickThumb.fillStyle(0xffffff, 0.6);
     this.joystickThumb.fillCircle(0, 0, this.thumbRadius);
     this.joystickThumb.lineStyle(2, 0x2a9d8f, 0.8);

@@ -1,6 +1,12 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { eventBus } from '../lib/EventBus';
 import { POIData, POIType, POIInteraction } from '../types/poi';
+import {
+  cachePOIs,
+  getCachedPOIs,
+  isPOICacheStale,
+  CachedPOI,
+} from '../services/offline';
 
 interface POIState {
   selectedPOI: POIData | null;
@@ -8,6 +14,41 @@ interface POIState {
   nearbyPOIs: POIData[];
   allPOIs: POIData[];
   interactions: POIInteraction[];
+  isFromCache: boolean;
+  cacheStatus: 'loading' | 'fresh' | 'stale' | 'error';
+}
+
+/**
+ * Convert POIData to CachedPOI format for storage
+ */
+function toCachedPOI(poi: POIData): CachedPOI {
+  return {
+    id: poi.id,
+    type: poi.type,
+    name: poi.name,
+    position: { x: poi.position.x, y: poi.position.y },
+    floor: poi.floor,
+    metadata: poi.metadata,
+  };
+}
+
+/**
+ * Convert CachedPOI back to POIData format
+ */
+function fromCachedPOI(cached: CachedPOI): POIData {
+  return {
+    id: cached.id,
+    type: cached.type as POIType,
+    name: cached.name,
+    position: {
+      x: cached.position.x,
+      y: cached.position.y,
+      floor: cached.floor,
+    },
+    floor: cached.floor,
+    metadata: cached.metadata as Record<string, unknown>,
+    isActive: true,
+  };
 }
 
 export function usePOI() {
@@ -17,7 +58,47 @@ export function usePOI() {
     nearbyPOIs: [],
     allPOIs: [],
     interactions: [],
+    isFromCache: false,
+    cacheStatus: 'loading',
   });
+
+  const hasLoadedCache = useRef(false);
+
+  // Load cached POIs on mount (offline-first approach)
+  useEffect(() => {
+    if (hasLoadedCache.current) return;
+    hasLoadedCache.current = true;
+
+    async function loadFromCache() {
+      try {
+        const isStale = await isPOICacheStale();
+        const cachedPOIs = await getCachedPOIs();
+
+        if (cachedPOIs.length > 0) {
+          const pois = cachedPOIs.map(fromCachedPOI);
+          setState((prev) => ({
+            ...prev,
+            allPOIs: pois,
+            isFromCache: true,
+            cacheStatus: isStale ? 'stale' : 'fresh',
+          }));
+        } else {
+          setState((prev) => ({
+            ...prev,
+            cacheStatus: 'stale',
+          }));
+        }
+      } catch (error) {
+        console.error('[usePOI] Failed to load from cache:', error);
+        setState((prev) => ({
+          ...prev,
+          cacheStatus: 'error',
+        }));
+      }
+    }
+
+    loadFromCache();
+  }, []);
 
   // Listen for POI selection events
   useEffect(() => {
@@ -142,11 +223,22 @@ export function usePOI() {
   );
 
   // Update the full POI list (typically called by game logic)
-  const updatePOIList = useCallback((pois: POIData[]) => {
+  // Also caches POIs for offline use
+  const updatePOIList = useCallback((pois: POIData[], fromNetwork = false) => {
     setState((prev) => ({
       ...prev,
       allPOIs: pois,
+      isFromCache: !fromNetwork,
+      cacheStatus: fromNetwork ? 'fresh' : prev.cacheStatus,
     }));
+
+    // Cache POIs in the background when loaded from network
+    if (fromNetwork && pois.length > 0) {
+      const cachedPOIs = pois.map(toCachedPOI);
+      cachePOIs(cachedPOIs).catch((error) => {
+        console.error('[usePOI] Failed to cache POIs:', error);
+      });
+    }
   }, []);
 
   // Clear nearby POIs
@@ -210,6 +302,10 @@ export function usePOI() {
     allPOIs: state.allPOIs,
     interactions: state.interactions,
     stats,
+
+    // Cache status
+    isFromCache: state.isFromCache,
+    cacheStatus: state.cacheStatus,
 
     // Actions
     selectPOI,

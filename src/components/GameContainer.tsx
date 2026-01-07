@@ -21,6 +21,11 @@ export function GameContainer() {
     // Only create game if no instance exists and container is ready
     if (!gameInstance && containerRef.current) {
       gameInstance = new Phaser.Game(gameConfig);
+
+      // Expose for development testing (Playwright)
+      if (import.meta.env.DEV) {
+        (window as unknown as { __phaserGame: Phaser.Game }).__phaserGame = gameInstance;
+      }
     }
 
     return () => {

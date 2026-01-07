@@ -28,6 +28,8 @@ export class CameraController {
 
   private zoomInKey: Phaser.Input.Keyboard.Key | null = null;
   private zoomOutKey: Phaser.Input.Keyboard.Key | null = null;
+  private zoomInKeyMain: Phaser.Input.Keyboard.Key | null = null;
+  private zoomOutKeyMain: Phaser.Input.Keyboard.Key | null = null;
 
   // Pinch-to-zoom state
   private isPinching = false;
@@ -35,6 +37,9 @@ export class CameraController {
   private pinchStartZoom = 1;
   private readonly pinchDeadZone = 10; // Minimum pixel distance change to trigger zoom
   private readonly joystickZone = { x: 0, y: 0, width: 200, height: 200 }; // Bottom-left area for joystick
+
+  // Track if destroyed to prevent double cleanup
+  private isDestroyed = false;
 
   constructor(scene: Phaser.Scene, config: CameraConfig) {
     this.scene = scene;
@@ -67,7 +72,7 @@ export class CameraController {
   private setupZoomControls(): void {
     if (!this.scene.input.keyboard) return;
 
-    // Plus/Minus keys for zoom
+    // Numpad Plus/Minus keys for zoom
     this.zoomInKey = this.scene.input.keyboard.addKey(
       Phaser.Input.Keyboard.KeyCodes.PLUS
     );
@@ -75,8 +80,15 @@ export class CameraController {
       Phaser.Input.Keyboard.KeyCodes.MINUS
     );
 
+    // Main keyboard = (code 187) and - (code 189) keys for zoom
+    // Using raw keycodes since Phaser doesn't have named constants for these
+    this.zoomInKeyMain = this.scene.input.keyboard.addKey(187); // = key (same as + on US keyboard)
+    this.zoomOutKeyMain = this.scene.input.keyboard.addKey(189); // - key on main keyboard
+
     this.zoomInKey.on('down', () => this.zoomIn());
     this.zoomOutKey.on('down', () => this.zoomOut());
+    this.zoomInKeyMain.on('down', () => this.zoomIn());
+    this.zoomOutKeyMain.on('down', () => this.zoomOut());
 
     // Mouse wheel zoom
     this.scene.input.on('wheel', (
@@ -263,5 +275,40 @@ export class CameraController {
   update(): void {
     // Any per-frame camera updates can go here
     // Currently handled by Phaser's built-in camera follow
+  }
+
+  destroy(): void {
+    if (this.isDestroyed) return;
+    this.isDestroyed = true;
+
+    // Remove keyboard key listeners
+    if (this.zoomInKey) {
+      this.zoomInKey.off('down');
+      this.zoomInKey = null;
+    }
+    if (this.zoomOutKey) {
+      this.zoomOutKey.off('down');
+      this.zoomOutKey = null;
+    }
+    if (this.zoomInKeyMain) {
+      this.zoomInKeyMain.off('down');
+      this.zoomInKeyMain = null;
+    }
+    if (this.zoomOutKeyMain) {
+      this.zoomOutKeyMain.off('down');
+      this.zoomOutKeyMain = null;
+    }
+
+    // Remove pointer event listeners
+    this.scene.input.off('pointerdown', this.onPointerDown, this);
+    this.scene.input.off('pointermove', this.onPointerMove, this);
+    this.scene.input.off('pointerup', this.onPointerUp, this);
+    this.scene.input.off('pointercancel', this.onPointerUp, this);
+
+    // Remove wheel listener
+    this.scene.input.off('wheel');
+
+    // Remove scale resize listener
+    this.scene.scale.off('resize', this.updateJoystickZone, this);
   }
 }

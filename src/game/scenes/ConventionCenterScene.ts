@@ -25,6 +25,11 @@ export class ConventionCenterScene extends Phaser.Scene {
   // Floor transition
   private isTransitioning = false;
 
+  // Event listener cleanup
+  private unsubscribeSwitchFloor: (() => void) | null = null;
+  private unsubscribeActionButton: (() => void) | null = null;
+  private unsubscribeNavigateToPOI: (() => void) | null = null;
+
   constructor() {
     super({ key: 'ConventionCenterScene' });
   }
@@ -97,10 +102,13 @@ export class ConventionCenterScene extends Phaser.Scene {
     this.createFloorLayout(this.currentFloor);
 
     // Listen for floor change events from React
-    eventBus.on('switch-floor', this.handleFloorChange.bind(this));
+    this.unsubscribeSwitchFloor = eventBus.on('switch-floor', this.handleFloorChange.bind(this));
 
     // Add instructions
     this.createInstructions();
+
+    // Setup event handlers for action button and navigation
+    this.setupEventHandlers();
   }
 
   private createInteriorBackground(): void {
@@ -199,12 +207,12 @@ export class ConventionCenterScene extends Phaser.Scene {
       ? [
           'Touch joystick (bottom-left) - Move',
           'Pinch to zoom',
-          'Tap POIs to interact',
+          'Tap POIs or use action button',
         ]
       : [
           'WASD or Arrow Keys - Move',
           'Mouse Wheel / +/- - Zoom',
-          'Click POIs to interact',
+          'E or Space - Interact with nearby POI',
         ];
 
     this.add
@@ -356,9 +364,77 @@ export class ConventionCenterScene extends Phaser.Scene {
     return consent === 'true';
   }
 
+  /**
+   * Setup event handlers for action button and POI navigation
+   */
+  private setupEventHandlers(): void {
+    // Handle action button press (mobile) or keyboard interact (desktop)
+    this.unsubscribeActionButton = eventBus.on('action-button-pressed', this.handleActionButton.bind(this));
+
+    // Handle navigation to POI request
+    this.unsubscribeNavigateToPOI = eventBus.on('navigate-to-poi', this.handleNavigateToPOI.bind(this));
+  }
+
+  /**
+   * Handle action button press - interact with nearest POI
+   */
+  private handleActionButton(): void {
+    const playerPos = this.player.getPosition();
+    const interactionRadius = 150; // Max distance to interact with a POI
+
+    // Find the closest POI within interaction radius
+    const closestPOI = this.poiManager.getClosestPOI(playerPos.x, playerPos.y);
+
+    if (closestPOI) {
+      const distance = closestPOI.getDistanceTo(playerPos.x, playerPos.y);
+
+      if (distance <= interactionRadius) {
+        // Trigger the POI click event (same as clicking on it)
+        eventBus.emit('poi-selected', {
+          poiId: closestPOI.data.id,
+          type: closestPOI.data.type,
+          data: closestPOI.data,
+        });
+      }
+    }
+  }
+
+  /**
+   * Handle navigation to a POI - move player towards the POI position
+   */
+  private handleNavigateToPOI(data: unknown): void {
+    const navData = data as { poiId: string; position: { x: number; y: number } };
+
+    if (navData && navData.position) {
+      const { x, y } = navData.position;
+
+      // Move player to POI position
+      this.player.setPosition(x, y);
+
+      // Close the POI panel
+      eventBus.emit('poi-panel-close', {});
+    }
+  }
+
   shutdown(): void {
-    // Cleanup
-    eventBus.off('switch-floor', this.handleFloorChange.bind(this));
+    // Cleanup EventBus subscriptions
+    if (this.unsubscribeSwitchFloor) {
+      this.unsubscribeSwitchFloor();
+      this.unsubscribeSwitchFloor = null;
+    }
+    if (this.unsubscribeActionButton) {
+      this.unsubscribeActionButton();
+      this.unsubscribeActionButton = null;
+    }
+    if (this.unsubscribeNavigateToPOI) {
+      this.unsubscribeNavigateToPOI();
+      this.unsubscribeNavigateToPOI = null;
+    }
+
+    // Cleanup CameraController
+    if (this.cameraController) {
+      this.cameraController.destroy();
+    }
 
     if (this.poiManager) {
       this.poiManager.destroy();

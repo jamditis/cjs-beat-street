@@ -30,6 +30,9 @@ export class PresenceManager {
   private updateInterval = 1000; // Update every second
   private lastUpdate = 0;
 
+  // Event listener cleanup functions
+  private eventUnsubscribers: (() => void)[] = [];
+
   constructor(config: PresenceManagerConfig) {
     this.scene = config.scene;
     this.enabled = config.enabled ?? true;
@@ -41,31 +44,39 @@ export class PresenceManager {
 
   private setupEventListeners(): void {
     // Listen for presence updates from EventBus
-    eventBus.on('presence-update', (data: unknown) => {
-      const presenceData = data as { users: UserPresence[] };
-      this.updateMarkers(presenceData.users);
-    });
+    this.eventUnsubscribers.push(
+      eventBus.on('presence-update', (data: unknown) => {
+        const presenceData = data as { users: UserPresence[] };
+        this.updateMarkers(presenceData.users);
+      })
+    );
 
     // Listen for zone changes
-    eventBus.on('player-moved', (data: unknown) => {
-      const moveData = data as { zone: string };
-      if (moveData.zone !== this.currentZone) {
-        this.currentZone = moveData.zone;
-        this.updateMarkerVisibility();
-      }
-    });
+    this.eventUnsubscribers.push(
+      eventBus.on('player-moved', (data: unknown) => {
+        const moveData = data as { zone: string };
+        if (moveData.zone !== this.currentZone) {
+          this.currentZone = moveData.zone;
+          this.updateMarkerVisibility();
+        }
+      })
+    );
 
     // Listen for attendee selection requests
-    eventBus.on('focus-attendee', (data: unknown) => {
-      const focusData = data as { uid: string };
-      this.focusOnAttendee(focusData.uid);
-    });
+    this.eventUnsubscribers.push(
+      eventBus.on('focus-attendee', (data: unknown) => {
+        const focusData = data as { uid: string };
+        this.focusOnAttendee(focusData.uid);
+      })
+    );
 
     // Listen for show/hide requests
-    eventBus.on('toggle-attendee-markers', (data: unknown) => {
-      const toggleData = data as { visible: boolean };
-      this.setVisible(toggleData.visible);
-    });
+    this.eventUnsubscribers.push(
+      eventBus.on('toggle-attendee-markers', (data: unknown) => {
+        const toggleData = data as { visible: boolean };
+        this.setVisible(toggleData.visible);
+      })
+    );
   }
 
   private updateMarkers(users: UserPresence[]): void {
@@ -362,6 +373,12 @@ export class PresenceManager {
   }
 
   public destroy(): void {
+    // Unsubscribe from all EventBus events
+    for (const unsubscribe of this.eventUnsubscribers) {
+      unsubscribe();
+    }
+    this.eventUnsubscribers = [];
+
     // Clean up all markers
     for (const marker of this.markers.values()) {
       marker.destroy();

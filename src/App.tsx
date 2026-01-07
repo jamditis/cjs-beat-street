@@ -1,15 +1,18 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, User } from 'firebase/auth';
+import { Settings } from 'lucide-react';
 import { GameContainer } from './components/GameContainer';
 import { POIPanel } from './components/POIPanel';
 import { FloorSelector } from './components/FloorSelector';
 import { PresenceList } from './components/PresenceList';
 import { ConsentModal } from './components/ConsentModal';
+import { SettingsPanel } from './components/SettingsPanel';
 import { TouchUI } from './components/TouchUI';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { usePresence } from './hooks/usePresence';
 import { useOffline } from './hooks/useOffline';
+import { eventBus } from './lib/EventBus';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,12 +37,37 @@ function BeatStreetApp() {
   const [shareLocation, setShareLocation] = useState(
     () => localStorage.getItem('location-consent') === 'true'
   );
+  const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   const [_firebaseUser, setFirebaseUser] = useState<User | null>(null);
   const [attendee, setAttendee] = useState<VerifiedAttendee | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const { isOnline } = useOffline();
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+      const isMobileUA = mobileRegex.test(navigator.userAgent);
+      const isSmallScreen = window.innerWidth < 1024;
+      setIsMobile(hasTouch && (isMobileUA || isSmallScreen));
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Listen for menu button event from TouchUI
+  useEffect(() => {
+    const unsubscribe = eventBus.on('menu-button-pressed', () => {
+      setShowSettingsPanel(true);
+    });
+    return unsubscribe;
+  }, []);
 
   // Check for cached verification
   useEffect(() => {
@@ -160,6 +188,11 @@ function BeatStreetApp() {
     localStorage.setItem('location-consent', consent ? 'true' : 'false');
   };
 
+  const handleLocationToggle = (share: boolean) => {
+    setShareLocation(share);
+    localStorage.setItem('location-consent', share ? 'true' : 'false');
+  };
+
   // Loading state
   if (authLoading) {
     return (
@@ -251,16 +284,18 @@ function BeatStreetApp() {
         </div>
       )}
 
-      {/* User menu */}
-      <div className="absolute top-4 right-4 z-40">
-        <button
-          onClick={handleSignOut}
-          className="bg-paper/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-md text-sm text-ink hover:bg-paper transition-colors flex items-center gap-2"
-        >
-          <span className="font-medium">{attendee.displayName}</span>
-          <span className="text-ink/50">Sign out</span>
-        </button>
-      </div>
+      {/* Desktop settings button (hidden on mobile, TouchUI handles it there) */}
+      {!isMobile && (
+        <div className="absolute top-4 right-4 z-40">
+          <button
+            onClick={() => setShowSettingsPanel(true)}
+            className="w-10 h-10 bg-paper/90 backdrop-blur-sm rounded-full shadow-md flex items-center justify-center hover:bg-paper transition-colors focus:outline-none focus:ring-2 focus:ring-teal-600"
+            aria-label="Open settings"
+          >
+            <Settings className="w-5 h-5 text-ink" />
+          </button>
+        </div>
+      )}
 
       {/* Main game view */}
       <GameContainer />
@@ -273,6 +308,14 @@ function BeatStreetApp() {
 
       {/* Modals */}
       {showConsentModal && <ConsentModal onConsent={handleConsent} />}
+      <SettingsPanel
+        isOpen={showSettingsPanel}
+        onClose={() => setShowSettingsPanel(false)}
+        shareLocation={shareLocation}
+        onLocationToggle={handleLocationToggle}
+        displayName={attendee.displayName}
+        onSignOut={handleSignOut}
+      />
     </div>
   );
 }

@@ -27,6 +27,10 @@ export class CityMapScene extends Phaser.Scene {
   private minimapIndicator!: Phaser.GameObjects.Rectangle;
   private zoomText!: Phaser.GameObjects.Text;
 
+  // Event listener cleanup (initialized in setupEventHandlers, used in shutdown)
+  private unsubscribeActionButton!: () => void;
+  private unsubscribeNavigateToPOI!: () => void;
+
   constructor() {
     super({ key: 'CityMapScene' });
   }
@@ -103,6 +107,9 @@ export class CityMapScene extends Phaser.Scene {
 
     // Add instructions
     this.createInstructions();
+
+    // Setup event handlers for action button and navigation
+    this.setupEventHandlers();
   }
 
   private createMapBackground(): void {
@@ -320,12 +327,12 @@ export class CityMapScene extends Phaser.Scene {
       ? [
           'Touch joystick (bottom-left) - Move',
           'Pinch to zoom',
-          'Tap Convention Center to enter',
+          'Tap POIs or use action button',
         ]
       : [
           'WASD or Arrow Keys - Move',
           'Mouse Wheel / +/- - Zoom',
-          'Click Convention Center to enter',
+          'E or Space - Interact with nearby POI',
         ];
 
     this.add
@@ -382,7 +389,68 @@ export class CityMapScene extends Phaser.Scene {
     return consent === 'true';
   }
 
+  /**
+   * Setup event handlers for action button and POI navigation
+   */
+  private setupEventHandlers(): void {
+    // Handle action button press (mobile) or keyboard interact (desktop)
+    this.unsubscribeActionButton = eventBus.on('action-button-pressed', this.handleActionButton.bind(this));
+
+    // Handle navigation to POI request
+    this.unsubscribeNavigateToPOI = eventBus.on('navigate-to-poi', this.handleNavigateToPOI.bind(this));
+  }
+
+  /**
+   * Handle action button press - interact with nearest POI
+   */
+  private handleActionButton(): void {
+    const playerPos = this.player.getPosition();
+    const interactionRadius = 150; // Max distance to interact with a POI
+
+    // Find the closest POI within interaction radius
+    const closestPOI = this.poiManager.getClosestPOI(playerPos.x, playerPos.y);
+
+    if (closestPOI) {
+      const distance = closestPOI.getDistanceTo(playerPos.x, playerPos.y);
+
+      if (distance <= interactionRadius) {
+        // Trigger the POI click event (same as clicking on it)
+        eventBus.emit('poi-selected', {
+          poiId: closestPOI.data.id,
+          type: closestPOI.data.type,
+          data: closestPOI.data,
+        });
+      }
+    }
+  }
+
+  /**
+   * Handle navigation to a POI - move player towards the POI position
+   */
+  private handleNavigateToPOI(data: unknown): void {
+    const navData = data as { poiId: string; position: { x: number; y: number } };
+
+    if (navData && navData.position) {
+      const { x, y } = navData.position;
+
+      // Move player to POI position
+      this.player.setPosition(x, y);
+
+      // Close the POI panel
+      eventBus.emit('poi-panel-close', {});
+    }
+  }
+
   shutdown(): void {
+    // Cleanup EventBus subscriptions
+    this.unsubscribeActionButton?.();
+    this.unsubscribeNavigateToPOI?.();
+
+    // Cleanup CameraController (pointer, keyboard, scale events)
+    if (this.cameraController) {
+      this.cameraController.destroy();
+    }
+
     // Cleanup when scene shuts down
     if (this.poiManager) {
       this.poiManager.destroy();

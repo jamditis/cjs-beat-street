@@ -22,6 +22,11 @@ class EventBus {
 
 export const eventBus = new EventBus();
 
+// Expose for development testing (Playwright)
+if (import.meta.env.DEV) {
+  (window as unknown as { __eventBus: EventBus }).__eventBus = eventBus;
+}
+
 // Event type definitions for type safety
 export interface GameEvents {
   'poi-selected': { poiId: string; type: string; data: unknown };

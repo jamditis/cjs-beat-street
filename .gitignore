@@ -53,3 +53,4 @@ dev-dist
 # TypeScript
 *.tsbuildinfo
 dist-node
+.playwright-mcp/

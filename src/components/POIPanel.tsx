@@ -30,11 +30,18 @@ export function POIPanel() {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = eventBus.on('poi-selected', (poi: unknown) => {
+    const unsubscribeSelect = eventBus.on('poi-selected', (poi: unknown) => {
       setSelectedPOI(poi as POIEventData);
     });
 
-    return unsubscribe;
+    const unsubscribeClose = eventBus.on('poi-panel-close', () => {
+      setSelectedPOI(null);
+    });
+
+    return () => {
+      unsubscribeSelect();
+      unsubscribeClose();
+    };
   }, []);
 
   // Handle Escape key to close panel
@@ -252,7 +259,7 @@ export function POIPanel() {
           animate={{ x: 0 }}
           exit={{ x: '100%' }}
           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-          className="fixed right-0 top-0 h-full w-80 bg-paper shadow-xl z-50 p-6"
+          className="fixed right-0 top-0 h-full w-full sm:w-80 max-w-[calc(100vw-2rem)] bg-paper shadow-xl z-50 p-6"
           role="dialog"
           aria-modal="true"
           aria-labelledby="poi-panel-title"
