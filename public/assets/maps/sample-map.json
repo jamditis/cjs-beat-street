@@ -1,0 +1,141 @@
+{
+  "compressionlevel": -1,
+  "height": 10,
+  "infinite": false,
+  "layers": [
+    {
+      "data": [
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+      ],
+      "height": 10,
+      "name": "ground",
+      "opacity": 1,
+      "type": "tilelayer",
+      "visible": true,
+      "width": 10,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 2, 2, 0, 0, 0, 0, 0, 2, 0,
+        0, 2, 2, 0, 0, 0, 0, 0, 2, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 2, 2, 0, 0, 0,
+        0, 0, 0, 0, 0, 2, 2, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+      ],
+      "height": 10,
+      "name": "collision",
+      "opacity": 1,
+      "type": "tilelayer",
+      "visible": true,
+      "width": 10,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "height": 0,
+      "name": "spawns",
+      "objects": [
+        {
+          "height": 0,
+          "id": 1,
+          "name": "player_spawn",
+          "rotation": 0,
+          "visible": true,
+          "width": 0,
+          "x": 320,
+          "y": 160
+        }
+      ],
+      "opacity": 1,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "height": 0,
+      "name": "pois",
+      "objects": [
+        {
+          "height": 32,
+          "id": 2,
+          "name": "info_booth",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "information"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 128,
+          "y": 96
+        },
+        {
+          "height": 32,
+          "id": 3,
+          "name": "rest_area",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "rest"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 576,
+          "y": 160
+        }
+      ],
+      "opacity": 1,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "nextlayerid": 5,
+  "nextobjectid": 4,
+  "orientation": "isometric",
+  "renderorder": "right-up",
+  "tiledversion": "1.10.2",
+  "tileheight": 32,
+  "tilesets": [
+    {
+      "columns": 8,
+      "firstgid": 1,
+      "image": "../tilesets/sample-tileset.png",
+      "imageheight": 256,
+      "imagewidth": 512,
+      "margin": 0,
+      "name": "sample",
+      "spacing": 0,
+      "tilecount": 64,
+      "tileheight": 32,
+      "tilewidth": 64
+    }
+  ],
+  "tilewidth": 64,
+  "type": "map",
+  "version": "1.10"
+}

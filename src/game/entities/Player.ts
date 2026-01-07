@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { InputManager } from '../systems/InputManager';
 
 export interface PlayerConfig {
   scene: Phaser.Scene;
@@ -7,6 +8,7 @@ export interface PlayerConfig {
   color?: number;
   width?: number;
   height?: number;
+  inputManager?: InputManager;
 }
 
 export class Player {
@@ -19,6 +21,7 @@ export class Player {
     S: Phaser.Input.Keyboard.Key;
     D: Phaser.Input.Keyboard.Key;
   } | null = null;
+  private inputManager?: InputManager;
 
   private moveSpeed = 200; // pixels per second
   private readonly width: number;
@@ -28,6 +31,7 @@ export class Player {
     this.scene = config.scene;
     this.width = config.width || 32;
     this.height = config.height || 48;
+    this.inputManager = config.inputManager;
 
     // Create a placeholder sprite using a rectangle
     // In the future, this can be replaced with an actual sprite
@@ -51,7 +55,10 @@ export class Player {
     this.sprite.setDrag(0.8);
     this.sprite.setMaxVelocity(this.moveSpeed, this.moveSpeed);
 
-    this.setupInput();
+    // Only setup direct keyboard input if InputManager not provided (backward compatibility)
+    if (!this.inputManager) {
+      this.setupInput();
+    }
   }
 
   private setupInput(): void {
@@ -70,44 +77,59 @@ export class Player {
   }
 
   update(): void {
-    if (!this.cursors && !this.wasdKeys) return;
+    let velocity = new Phaser.Math.Vector2(0, 0);
 
-    const velocity = new Phaser.Math.Vector2(0, 0);
+    // Use InputManager if available, otherwise fall back to direct keyboard input
+    if (this.inputManager) {
+      const movement = this.inputManager.getMovementVector();
+      velocity.x = movement.x;
+      velocity.y = movement.y;
+    } else {
+      // Backward compatibility: direct keyboard input
+      if (!this.cursors && !this.wasdKeys) return;
 
-    // Check horizontal movement (Arrow keys + WASD)
-    if (
-      this.cursors?.left?.isDown ||
-      this.wasdKeys?.A.isDown
-    ) {
-      velocity.x = -1;
-    } else if (
-      this.cursors?.right?.isDown ||
-      this.wasdKeys?.D.isDown
-    ) {
-      velocity.x = 1;
+      // Check horizontal movement (Arrow keys + WASD)
+      if (
+        this.cursors?.left?.isDown ||
+        this.wasdKeys?.A.isDown
+      ) {
+        velocity.x = -1;
+      } else if (
+        this.cursors?.right?.isDown ||
+        this.wasdKeys?.D.isDown
+      ) {
+        velocity.x = 1;
+      }
+
+      // Check vertical movement (Arrow keys + WASD)
+      if (
+        this.cursors?.up?.isDown ||
+        this.wasdKeys?.W.isDown
+      ) {
+        velocity.y = -1;
+      } else if (
+        this.cursors?.down?.isDown ||
+        this.wasdKeys?.S.isDown
+      ) {
+        velocity.y = 1;
+      }
+
+      // Normalize diagonal movement so it's not faster
+      velocity.normalize();
     }
-
-    // Check vertical movement (Arrow keys + WASD)
-    if (
-      this.cursors?.up?.isDown ||
-      this.wasdKeys?.W.isDown
-    ) {
-      velocity.y = -1;
-    } else if (
-      this.cursors?.down?.isDown ||
-      this.wasdKeys?.S.isDown
-    ) {
-      velocity.y = 1;
-    }
-
-    // Normalize diagonal movement so it's not faster
-    velocity.normalize();
 
     // Apply velocity
     this.sprite.setVelocity(
       velocity.x * this.moveSpeed,
       velocity.y * this.moveSpeed
     );
+  }
+
+  setInputManager(inputManager: InputManager): void {
+    this.inputManager = inputManager;
+    // Clear direct keyboard input if switching to InputManager
+    this.cursors = null;
+    this.wasdKeys = null;
   }
 
   getPosition(): { x: number; y: number } {
