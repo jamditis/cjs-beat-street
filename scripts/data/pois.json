@@ -1,0 +1,660 @@
+[
+  {
+    "id": "session-opening-keynote",
+    "type": "session",
+    "name": "Opening Keynote: The Future of Journalism",
+    "description": "Join us for an inspiring opening keynote exploring the future of journalism in the digital age.",
+    "venueId": "chapel-hill",
+    "mapId": "convention-center",
+    "floor": 3,
+    "position": {
+      "x": 800,
+      "y": 600,
+      "floor": 3,
+      "zone": "main-stage",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "metadata": {
+      "startTime": "2026-06-08T09:00:00-04:00",
+      "endTime": "2026-06-08T10:00:00-04:00",
+      "speaker": "Dr. Emily Chen, Pulitzer Prize Winner",
+      "room": "Room A",
+      "track": "keynote",
+      "capacity": 500,
+      "attendeeCount": 0
+    },
+    "isActive": true
+  },
+  {
+    "id": "session-ai-journalism",
+    "type": "session",
+    "name": "AI in Journalism Workshop",
+    "description": "Learn how to leverage AI tools for investigative reporting and content creation.",
+    "venueId": "chapel-hill",
+    "mapId": "convention-center",
+    "floor": 2,
+    "position": {
+      "x": 400,
+      "y": 400,
+      "floor": 2,
+      "zone": "workshop-wing",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "metadata": {
+      "startTime": "2026-06-08T10:30:00-04:00",
+      "endTime": "2026-06-08T12:00:00-04:00",
+      "speaker": "Marcus Rodriguez, AI Ethics Lead at Google News Initiative",
+      "room": "Room B",
+      "track": "technology",
+      "capacity": 100,
+      "attendeeCount": 0
+    },
+    "isActive": true
+  },
+  {
+    "id": "session-data-viz",
+    "type": "session",
+    "name": "Data Visualization for Impact",
+    "description": "Master the art of telling stories through data visualization and interactive graphics.",
+    "venueId": "chapel-hill",
+    "mapId": "convention-center",
+    "floor": 2,
+    "position": {
+      "x": 600,
+      "y": 400,
+      "floor": 2,
+      "zone": "workshop-wing",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "metadata": {
+      "startTime": "2026-06-08T10:30:00-04:00",
+      "endTime": "2026-06-08T12:00:00-04:00",
+      "speaker": "Sarah Kim, Data Journalist at The New York Times",
+      "room": "Room C",
+      "track": "skills",
+      "capacity": 80,
+      "attendeeCount": 0
+    },
+    "isActive": true
+  },
+  {
+    "id": "session-investigative-panel",
+    "type": "session",
+    "name": "Investigative Reporting: Deep Dives that Matter",
+    "description": "Panel discussion with award-winning investigative journalists on techniques and challenges.",
+    "venueId": "chapel-hill",
+    "mapId": "convention-center",
+    "floor": 2,
+    "position": {
+      "x": 800,
+      "y": 400,
+      "floor": 2,
+      "zone": "conference-rooms",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "metadata": {
+      "startTime": "2026-06-08T13:00:00-04:00",
+      "endTime": "2026-06-08T14:30:00-04:00",
+      "speaker": "Panel: James Foster, Maria Santos, Robert Chen",
+      "room": "Room D",
+      "track": "journalism",
+      "capacity": 150,
+      "attendeeCount": 0
+    },
+    "isActive": true
+  },
+  {
+    "id": "session-newsletter-strategies",
+    "type": "session",
+    "name": "Newsletter Strategies for Sustainable Journalism",
+    "description": "Build and monetize newsletters that connect with audiences and generate revenue.",
+    "venueId": "chapel-hill",
+    "mapId": "convention-center",
+    "floor": 2,
+    "position": {
+      "x": 400,
+      "y": 600,
+      "floor": 2,
+      "zone": "conference-rooms",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "metadata": {
+      "startTime": "2026-06-08T13:00:00-04:00",
+      "endTime": "2026-06-08T14:30:00-04:00",
+      "speaker": "Anna Lee, Founder of Newsletter Lab",
+      "room": "Room E",
+      "track": "business",
+      "capacity": 100,
+      "attendeeCount": 0
+    },
+    "isActive": true
+  },
+  {
+    "id": "session-podcast-production",
+    "type": "session",
+    "name": "Podcast Production Masterclass",
+    "description": "From concept to launch: producing compelling journalism podcasts that find an audience.",
+    "venueId": "chapel-hill",
+    "mapId": "convention-center",
+    "floor": 2,
+    "position": {
+      "x": 600,
+      "y": 600,
+      "floor": 2,
+      "zone": "conference-rooms",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "metadata": {
+      "startTime": "2026-06-08T14:30:00-04:00",
+      "endTime": "2026-06-08T16:00:00-04:00",
+      "speaker": "David Park, Executive Producer at NPR",
+      "room": "Room F",
+      "track": "skills",
+      "capacity": 80,
+      "attendeeCount": 0
+    },
+    "isActive": true
+  },
+  {
+    "id": "session-social-media-ethics",
+    "type": "session",
+    "name": "Social Media Ethics in Breaking News",
+    "description": "Navigate ethical challenges in fast-paced social media journalism and verification.",
+    "venueId": "chapel-hill",
+    "mapId": "convention-center",
+    "floor": 2,
+    "position": {
+      "x": 800,
+      "y": 600,
+      "floor": 2,
+      "zone": "conference-rooms",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "metadata": {
+      "startTime": "2026-06-08T14:30:00-04:00",
+      "endTime": "2026-06-08T16:00:00-04:00",
+      "speaker": "Dr. Jennifer Wu, Professor of Digital Journalism",
+      "room": "Room A",
+      "track": "ethics",
+      "capacity": 120,
+      "attendeeCount": 0
+    },
+    "isActive": true
+  },
+  {
+    "id": "session-newsroom-innovation",
+    "type": "session",
+    "name": "Newsroom Innovation: Building the Future",
+    "description": "How leading newsrooms are transforming their operations and embracing new technologies.",
+    "venueId": "chapel-hill",
+    "mapId": "convention-center",
+    "floor": 2,
+    "position": {
+      "x": 400,
+      "y": 800,
+      "floor": 2,
+      "zone": "conference-rooms",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "metadata": {
+      "startTime": "2026-06-08T16:00:00-04:00",
+      "endTime": "2026-06-08T17:30:00-04:00",
+      "speaker": "Panel: Lisa Johnson, Tom Williams, Priya Patel",
+      "room": "Room B",
+      "track": "innovation",
+      "capacity": 100,
+      "attendeeCount": 0
+    },
+    "isActive": true
+  },
+  {
+    "id": "session-closing-keynote",
+    "type": "session",
+    "name": "Closing Keynote: Journalism's Bright Future",
+    "description": "A forward-looking closing keynote celebrating journalism's impact and potential.",
+    "venueId": "chapel-hill",
+    "mapId": "convention-center",
+    "floor": 3,
+    "position": {
+      "x": 800,
+      "y": 600,
+      "floor": 3,
+      "zone": "main-stage",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "metadata": {
+      "startTime": "2026-06-09T17:00:00-04:00",
+      "endTime": "2026-06-09T18:00:00-04:00",
+      "speaker": "Maria Ressa, Nobel Peace Prize Laureate",
+      "room": "Room A",
+      "track": "keynote",
+      "capacity": 500,
+      "attendeeCount": 0
+    },
+    "isActive": true
+  },
+  {
+    "id": "session-networking-reception",
+    "type": "social",
+    "name": "Networking Reception",
+    "description": "Join fellow journalists for drinks, appetizers, and meaningful conversations.",
+    "venueId": "chapel-hill",
+    "mapId": "convention-center",
+    "floor": 1,
+    "position": {
+      "x": 800,
+      "y": 800,
+      "floor": 1,
+      "zone": "main-hall",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "metadata": {
+      "capacity": 400,
+      "currentOccupancy": 0,
+      "amenities": ["bar", "appetizers", "music", "networking-tables"]
+    },
+    "isActive": true
+  },
+  {
+    "id": "sponsor-google-news",
+    "type": "sponsor",
+    "name": "Google News Initiative",
+    "description": "Supporting quality journalism through technology, training, and funding.",
+    "venueId": "chapel-hill",
+    "mapId": "convention-center",
+    "floor": 1,
+    "position": {
+      "x": 200,
+      "y": 400,
+      "floor": 1,
+      "zone": "exhibit-hall",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "metadata": {
+      "company": "Google News Initiative",
+      "logoUrl": "https://newsinitiative.withgoogle.com/logo.png",
+      "booth": "Booth 1",
+      "category": "technology",
+      "representatives": ["Alex Chen", "Jordan Smith"],
+      "website": "https://newsinitiative.withgoogle.com"
+    },
+    "isActive": true
+  },
+  {
+    "id": "sponsor-meta-journalism",
+    "type": "sponsor",
+    "name": "Meta Journalism Project",
+    "description": "Empowering journalists with tools, training, and partnerships.",
+    "venueId": "chapel-hill",
+    "mapId": "convention-center",
+    "floor": 1,
+    "position": {
+      "x": 300,
+      "y": 400,
+      "floor": 1,
+      "zone": "exhibit-hall",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "metadata": {
+      "company": "Meta Journalism Project",
+      "logoUrl": "https://www.facebook.com/formedia/logo.png",
+      "booth": "Booth 2",
+      "category": "technology",
+      "representatives": ["Sam Williams", "Taylor Brooks"],
+      "website": "https://www.facebook.com/formedia"
+    },
+    "isActive": true
+  },
+  {
+    "id": "sponsor-knight-foundation",
+    "type": "sponsor",
+    "name": "Knight Foundation",
+    "description": "Investing in journalism excellence and innovation.",
+    "venueId": "chapel-hill",
+    "mapId": "convention-center",
+    "floor": 1,
+    "position": {
+      "x": 400,
+      "y": 400,
+      "floor": 1,
+      "zone": "exhibit-hall",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "metadata": {
+      "company": "Knight Foundation",
+      "logoUrl": "https://knightfoundation.org/logo.png",
+      "booth": "Booth 3",
+      "category": "foundation",
+      "representatives": ["Morgan Lee", "Casey Davis"],
+      "website": "https://knightfoundation.org"
+    },
+    "isActive": true
+  },
+  {
+    "id": "sponsor-associated-press",
+    "type": "sponsor",
+    "name": "Associated Press",
+    "description": "The essential global news network trusted by half the world's population.",
+    "venueId": "chapel-hill",
+    "mapId": "convention-center",
+    "floor": 1,
+    "position": {
+      "x": 500,
+      "y": 400,
+      "floor": 1,
+      "zone": "exhibit-hall",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "metadata": {
+      "company": "Associated Press",
+      "logoUrl": "https://www.ap.org/logo.png",
+      "booth": "Booth 4",
+      "category": "news-service",
+      "representatives": ["Jamie Martinez", "Riley Johnson"],
+      "website": "https://www.ap.org"
+    },
+    "isActive": true
+  },
+  {
+    "id": "sponsor-substack",
+    "type": "sponsor",
+    "name": "Substack",
+    "description": "The platform for independent writers and creators to build sustainable businesses.",
+    "venueId": "chapel-hill",
+    "mapId": "convention-center",
+    "floor": 1,
+    "position": {
+      "x": 200,
+      "y": 500,
+      "floor": 1,
+      "zone": "exhibit-hall",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "metadata": {
+      "company": "Substack",
+      "logoUrl": "https://substack.com/logo.png",
+      "booth": "Booth 5",
+      "category": "platform",
+      "representatives": ["Chris Hamby", "Nadia Kayyali"],
+      "website": "https://substack.com"
+    },
+    "isActive": true
+  },
+  {
+    "id": "sponsor-mailchimp",
+    "type": "sponsor",
+    "name": "Mailchimp",
+    "description": "Email marketing and automation platform for growing your audience.",
+    "venueId": "chapel-hill",
+    "mapId": "convention-center",
+    "floor": 1,
+    "position": {
+      "x": 300,
+      "y": 500,
+      "floor": 1,
+      "zone": "exhibit-hall",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "metadata": {
+      "company": "Mailchimp",
+      "logoUrl": "https://mailchimp.com/logo.png",
+      "booth": "Booth 6",
+      "category": "marketing",
+      "representatives": ["Devon Cooper", "Avery Wilson"],
+      "website": "https://mailchimp.com"
+    },
+    "isActive": true
+  },
+  {
+    "id": "sponsor-canva",
+    "type": "sponsor",
+    "name": "Canva",
+    "description": "Design tools for creating stunning graphics and visual content.",
+    "venueId": "chapel-hill",
+    "mapId": "convention-center",
+    "floor": 1,
+    "position": {
+      "x": 400,
+      "y": 500,
+      "floor": 1,
+      "zone": "exhibit-hall",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "metadata": {
+      "company": "Canva",
+      "logoUrl": "https://www.canva.com/logo.png",
+      "booth": "Booth 7",
+      "category": "design",
+      "representatives": ["Quinn Anderson", "Drew Patterson"],
+      "website": "https://www.canva.com"
+    },
+    "isActive": true
+  },
+  {
+    "id": "sponsor-adobe",
+    "type": "sponsor",
+    "name": "Adobe",
+    "description": "Creative tools for journalists and content creators worldwide.",
+    "venueId": "chapel-hill",
+    "mapId": "convention-center",
+    "floor": 1,
+    "position": {
+      "x": 500,
+      "y": 500,
+      "floor": 1,
+      "zone": "exhibit-hall",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "metadata": {
+      "company": "Adobe",
+      "logoUrl": "https://www.adobe.com/logo.png",
+      "booth": "Booth 8",
+      "category": "software",
+      "representatives": ["Sage Mitchell", "Phoenix Reyes"],
+      "website": "https://www.adobe.com"
+    },
+    "isActive": true
+  },
+  {
+    "id": "food-main-court",
+    "type": "food",
+    "name": "Main Food Court",
+    "description": "Diverse dining options featuring local and international cuisine.",
+    "venueId": "chapel-hill",
+    "mapId": "convention-center",
+    "floor": 1,
+    "position": {
+      "x": 600,
+      "y": 800,
+      "floor": 1,
+      "zone": "dining-area",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "metadata": {
+      "menuType": "various",
+      "dietaryOptions": ["vegetarian", "vegan", "gluten-free", "halal", "kosher"],
+      "hours": "7:00 AM - 8:00 PM",
+      "capacity": 300
+    },
+    "isActive": true
+  },
+  {
+    "id": "food-coffee-bar",
+    "type": "food",
+    "name": "Coffee Bar",
+    "description": "Artisan coffee, espresso drinks, and fresh pastries.",
+    "venueId": "chapel-hill",
+    "mapId": "convention-center",
+    "floor": 1,
+    "position": {
+      "x": 400,
+      "y": 800,
+      "floor": 1,
+      "zone": "lobby",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "metadata": {
+      "menuType": "cafe",
+      "dietaryOptions": ["dairy-free", "sugar-free"],
+      "hours": "6:30 AM - 6:00 PM",
+      "capacity": 50
+    },
+    "isActive": true
+  },
+  {
+    "id": "food-snack-station",
+    "type": "food",
+    "name": "Snack Station",
+    "description": "Grab-and-go snacks, drinks, and light refreshments.",
+    "venueId": "chapel-hill",
+    "mapId": "convention-center",
+    "floor": 2,
+    "position": {
+      "x": 200,
+      "y": 400,
+      "floor": 2,
+      "zone": "corridor",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "metadata": {
+      "menuType": "snacks",
+      "dietaryOptions": ["vegetarian", "vegan", "gluten-free"],
+      "hours": "8:00 AM - 5:00 PM",
+      "capacity": 20
+    },
+    "isActive": true
+  },
+  {
+    "id": "food-vip-catering",
+    "type": "food",
+    "name": "VIP Catering",
+    "description": "Premium catering for speakers, sponsors, and VIP guests.",
+    "venueId": "chapel-hill",
+    "mapId": "convention-center",
+    "floor": 3,
+    "position": {
+      "x": 600,
+      "y": 600,
+      "floor": 3,
+      "zone": "vip-lounge",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "metadata": {
+      "menuType": "premium",
+      "dietaryOptions": ["vegetarian", "vegan", "gluten-free", "halal", "kosher", "allergen-free"],
+      "hours": "8:00 AM - 7:00 PM",
+      "capacity": 100
+    },
+    "isActive": true
+  },
+  {
+    "id": "info-registration",
+    "type": "info",
+    "name": "Registration Desk",
+    "description": "Check in, get your badge, and receive conference materials.",
+    "venueId": "chapel-hill",
+    "mapId": "convention-center",
+    "floor": 1,
+    "position": {
+      "x": 200,
+      "y": 200,
+      "floor": 1,
+      "zone": "entrance",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "metadata": {
+      "services": ["badge-pickup", "registration", "info", "lost-and-found"],
+      "hours": "7:00 AM - 7:00 PM"
+    },
+    "isActive": true
+  },
+  {
+    "id": "info-restrooms-floor1",
+    "type": "info",
+    "name": "Restrooms - Floor 1",
+    "description": "Public restrooms with accessible facilities.",
+    "venueId": "chapel-hill",
+    "mapId": "convention-center",
+    "floor": 1,
+    "position": {
+      "x": 800,
+      "y": 200,
+      "floor": 1,
+      "zone": "facilities",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "metadata": {
+      "services": ["restrooms", "accessible", "family"],
+      "hours": "24/7"
+    },
+    "isActive": true
+  },
+  {
+    "id": "info-restrooms-floor2",
+    "type": "info",
+    "name": "Restrooms - Floor 2",
+    "description": "Public restrooms with accessible facilities.",
+    "venueId": "chapel-hill",
+    "mapId": "convention-center",
+    "floor": 2,
+    "position": {
+      "x": 800,
+      "y": 200,
+      "floor": 2,
+      "zone": "facilities",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "metadata": {
+      "services": ["restrooms", "accessible", "family"],
+      "hours": "24/7"
+    },
+    "isActive": true
+  },
+  {
+    "id": "info-first-aid",
+    "type": "info",
+    "name": "First Aid Station",
+    "description": "Medical assistance and first aid services.",
+    "venueId": "chapel-hill",
+    "mapId": "convention-center",
+    "floor": 1,
+    "position": {
+      "x": 200,
+      "y": 800,
+      "floor": 1,
+      "zone": "services",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "metadata": {
+      "services": ["medical", "first-aid", "emergency"],
+      "hours": "8:00 AM - 6:00 PM"
+    },
+    "isActive": true
+  }
+]

@@ -1,38 +1,665 @@
 {
-  "version": "1.10",
-  "tiledversion": "1.10.2",
-  "orientation": "isometric",
-  "renderorder": "right-up",
-  "width": 60,
-  "height": 45,
-  "tilewidth": 64,
-  "tileheight": 32,
+  "compressionlevel": -1,
+  "height": 30,
+  "infinite": false,
   "layers": [
     {
+      "data": [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 1, 1, 0,
+        0, 1, 1, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 0,
+        0, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 0,
+        0, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 0,
+        0, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+      ],
+      "height": 30,
       "name": "ground",
+      "opacity": 1,
       "type": "tilelayer",
       "visible": true,
-      "data": []
+      "width": 30,
+      "x": 0,
+      "y": 0
     },
     {
-      "name": "pois",
-      "type": "objectgroup",
-      "visible": true,
-      "objects": []
-    },
-    {
-      "name": "spawns",
-      "type": "objectgroup",
-      "visible": true,
+      "height": 0,
+      "name": "rooms",
       "objects": [
         {
-          "name": "spawn",
-          "type": "spawn",
-          "x": 960,
-          "y": 720
+          "height": 384,
+          "id": 1,
+          "name": "Exhibition Hall",
+          "properties": [
+            {
+              "name": "roomId",
+              "type": "string",
+              "value": "exhibition_hall"
+            },
+            {
+              "name": "capacity",
+              "type": "int",
+              "value": 500
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 704,
+          "x": 576,
+          "y": 256
+        },
+        {
+          "height": 96,
+          "id": 2,
+          "name": "Registration",
+          "properties": [
+            {
+              "name": "roomId",
+              "type": "string",
+              "value": "registration"
+            },
+            {
+              "name": "capacity",
+              "type": "int",
+              "value": 50
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 256,
+          "x": 192,
+          "y": 96
+        },
+        {
+          "height": 128,
+          "id": 3,
+          "name": "Sponsor Booths",
+          "properties": [
+            {
+              "name": "roomId",
+              "type": "string",
+              "value": "sponsor_booths"
+            },
+            {
+              "name": "capacity",
+              "type": "int",
+              "value": 100
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 256,
+          "x": 1408,
+          "y": 96
+        },
+        {
+          "height": 160,
+          "id": 4,
+          "name": "Food Court",
+          "properties": [
+            {
+              "name": "roomId",
+              "type": "string",
+              "value": "food_court"
+            },
+            {
+              "name": "capacity",
+              "type": "int",
+              "value": 150
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 384,
+          "x": 192,
+          "y": 736
+        },
+        {
+          "height": 128,
+          "id": 5,
+          "name": "Restrooms West",
+          "properties": [
+            {
+              "name": "roomId",
+              "type": "string",
+              "value": "restrooms_west"
+            },
+            {
+              "name": "capacity",
+              "type": "int",
+              "value": 20
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 256,
+          "x": 1280,
+          "y": 736
         }
-      ]
+      ],
+      "opacity": 1,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "height": 0,
+      "name": "pois",
+      "objects": [
+        {
+          "height": 32,
+          "id": 10,
+          "name": "Registration Desk",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "registration"
+            },
+            {
+              "name": "poiId",
+              "type": "string",
+              "value": "registration_desk"
+            },
+            {
+              "name": "description",
+              "type": "string",
+              "value": "Check in and get your conference badge"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 256,
+          "y": 128
+        },
+        {
+          "height": 32,
+          "id": 11,
+          "name": "Sponsor: IBM",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "sponsor"
+            },
+            {
+              "name": "poiId",
+              "type": "string",
+              "value": "sponsor_ibm"
+            },
+            {
+              "name": "sponsor",
+              "type": "string",
+              "value": "IBM"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 1472,
+          "y": 128
+        },
+        {
+          "height": 32,
+          "id": 12,
+          "name": "Sponsor: Microsoft",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "sponsor"
+            },
+            {
+              "name": "poiId",
+              "type": "string",
+              "value": "sponsor_microsoft"
+            },
+            {
+              "name": "sponsor",
+              "type": "string",
+              "value": "Microsoft"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 1568,
+          "y": 160
+        },
+        {
+          "height": 32,
+          "id": 13,
+          "name": "Sponsor: Google",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "sponsor"
+            },
+            {
+              "name": "poiId",
+              "type": "string",
+              "value": "sponsor_google"
+            },
+            {
+              "name": "sponsor",
+              "type": "string",
+              "value": "Google"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 1472,
+          "y": 192
+        },
+        {
+          "height": 32,
+          "id": 14,
+          "name": "Food: Coffee Bar",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "food"
+            },
+            {
+              "name": "poiId",
+              "type": "string",
+              "value": "coffee_bar"
+            },
+            {
+              "name": "description",
+              "type": "string",
+              "value": "Fresh coffee and pastries"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 256,
+          "y": 768
+        },
+        {
+          "height": 32,
+          "id": 15,
+          "name": "Food: Lunch Stations",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "food"
+            },
+            {
+              "name": "poiId",
+              "type": "string",
+              "value": "lunch_stations"
+            },
+            {
+              "name": "description",
+              "type": "string",
+              "value": "Multiple cuisine options"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 384,
+          "y": 832
+        },
+        {
+          "height": 32,
+          "id": 16,
+          "name": "Restroom",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "restroom"
+            },
+            {
+              "name": "poiId",
+              "type": "string",
+              "value": "restroom_west"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 1344,
+          "y": 800
+        },
+        {
+          "height": 32,
+          "id": 17,
+          "name": "Information Booth",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "information"
+            },
+            {
+              "name": "poiId",
+              "type": "string",
+              "value": "info_booth_main"
+            },
+            {
+              "name": "description",
+              "type": "string",
+              "value": "Conference information and assistance"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 960,
+          "y": 320
+        },
+        {
+          "height": 32,
+          "id": 18,
+          "name": "Networking Lounge",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "lounge"
+            },
+            {
+              "name": "poiId",
+              "type": "string",
+              "value": "networking_lounge_1"
+            },
+            {
+              "name": "description",
+              "type": "string",
+              "value": "Informal networking space"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 640,
+          "y": 640
+        }
+      ],
+      "opacity": 1,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "height": 0,
+      "name": "transitions",
+      "objects": [
+        {
+          "height": 64,
+          "id": 20,
+          "name": "Elevator 1",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "elevator"
+            },
+            {
+              "name": "targetFloor",
+              "type": "int",
+              "value": 2
+            },
+            {
+              "name": "transitionId",
+              "type": "string",
+              "value": "elevator_1"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 192,
+          "y": 320
+        },
+        {
+          "height": 64,
+          "id": 21,
+          "name": "Elevator 2",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "elevator"
+            },
+            {
+              "name": "targetFloor",
+              "type": "int",
+              "value": 2
+            },
+            {
+              "name": "transitionId",
+              "type": "string",
+              "value": "elevator_2"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 1664,
+          "y": 320
+        },
+        {
+          "height": 96,
+          "id": 22,
+          "name": "Stairs North",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "stairs"
+            },
+            {
+              "name": "targetFloor",
+              "type": "int",
+              "value": 2
+            },
+            {
+              "name": "transitionId",
+              "type": "string",
+              "value": "stairs_north"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 960,
+          "y": 64
+        },
+        {
+          "height": 96,
+          "id": 23,
+          "name": "Stairs South",
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "stairs"
+            },
+            {
+              "name": "targetFloor",
+              "type": "int",
+              "value": 2
+            },
+            {
+              "name": "transitionId",
+              "type": "string",
+              "value": "stairs_south"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 64,
+          "x": 960,
+          "y": 800
+        }
+      ],
+      "opacity": 1,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "height": 0,
+      "name": "spawns",
+      "objects": [
+        {
+          "height": 0,
+          "id": 30,
+          "name": "main_entrance",
+          "properties": [
+            {
+              "name": "spawnId",
+              "type": "string",
+              "value": "main_entrance"
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 0,
+          "x": 960,
+          "y": 928
+        },
+        {
+          "height": 0,
+          "id": 31,
+          "name": "from_elevator_1",
+          "properties": [
+            {
+              "name": "spawnId",
+              "type": "string",
+              "value": "from_elevator_1"
+            },
+            {
+              "name": "fromFloor",
+              "type": "int",
+              "value": 2
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 0,
+          "x": 224,
+          "y": 352
+        },
+        {
+          "height": 0,
+          "id": 32,
+          "name": "from_elevator_2",
+          "properties": [
+            {
+              "name": "spawnId",
+              "type": "string",
+              "value": "from_elevator_2"
+            },
+            {
+              "name": "fromFloor",
+              "type": "int",
+              "value": 2
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 0,
+          "x": 1696,
+          "y": 352
+        },
+        {
+          "height": 0,
+          "id": 33,
+          "name": "from_stairs_north",
+          "properties": [
+            {
+              "name": "spawnId",
+              "type": "string",
+              "value": "from_stairs_north"
+            },
+            {
+              "name": "fromFloor",
+              "type": "int",
+              "value": 2
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 0,
+          "x": 992,
+          "y": 128
+        },
+        {
+          "height": 0,
+          "id": 34,
+          "name": "from_stairs_south",
+          "properties": [
+            {
+              "name": "spawnId",
+              "type": "string",
+              "value": "from_stairs_south"
+            },
+            {
+              "name": "fromFloor",
+              "type": "int",
+              "value": 2
+            }
+          ],
+          "rotation": 0,
+          "visible": true,
+          "width": 0,
+          "x": 992,
+          "y": 864
+        }
+      ],
+      "opacity": 1,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0
     }
   ],
-  "tilesets": []
+  "nextlayerid": 6,
+  "nextobjectid": 35,
+  "orientation": "isometric",
+  "renderorder": "right-up",
+  "tiledversion": "1.10.2",
+  "tileheight": 32,
+  "tilesets": [],
+  "tilewidth": 64,
+  "type": "map",
+  "version": "1.10",
+  "width": 30
 }

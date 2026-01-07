@@ -56,6 +56,8 @@ export interface GameEvents {
   'player-moved': { x: number; y: number; zone: string; venueId?: VenueId };
   'presence-update': { users: UserPresence[] };
   'attendee-selected': { uid: string };
+  'attendee-clicked': { uid: string; displayName: string; organization?: string; status: string };
+  'attendee-hovered': { uid: string; displayName?: string; organization?: string; status?: string; hovered: boolean };
   'send-wave': { toUid: string; fromUid?: string; timestamp?: number };
   'focus-attendee': { uid: string };
   'attendee-focused': { uid: string };
@@ -63,6 +65,19 @@ export interface GameEvents {
   'cluster-expanded': { attendees: UserPresence[] };
   'action-button-pressed': Record<string, never>;
   'menu-button-pressed': Record<string, never>;
+  'player-appearance-changed': { preset: string };
+  'badge-unlocked': unknown; // BadgeUnlockEvent from achievements
+  'zone-entered': { zone: string; districtId?: string };
+  'session-attended': { sessionId: string };
+  'profile-viewed': { uid: string };
+  'points-earned': { points: number };
+  'scavenger-hunt-completed': Record<string, never>;
+  'hunt-item-collected': {
+    itemId: string;
+    item: unknown;
+    method: string;
+    progress: unknown;
+  };
 }
 
 export interface UserPresence {

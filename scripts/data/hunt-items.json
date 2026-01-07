@@ -1,0 +1,401 @@
+[
+  {
+    "name": "Welcome Desk",
+    "description": "Check in at the conference welcome desk",
+    "type": "landmark",
+    "points": 5,
+    "location": {
+      "x": 400,
+      "y": 300,
+      "floor": 1,
+      "zone": "lobby",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "venueId": "chapel-hill",
+    "metadata": {
+      "photoOpportunity": true,
+      "hint": "Look for the main entrance"
+    },
+    "isActive": true
+  },
+  {
+    "name": "Conference Fountain",
+    "description": "Find the iconic fountain in the plaza",
+    "type": "landmark",
+    "points": 5,
+    "location": {
+      "x": 800,
+      "y": 600,
+      "zone": "plaza",
+      "venueId": "chapel-hill",
+      "mapId": "outdoor"
+    },
+    "venueId": "chapel-hill",
+    "metadata": {
+      "photoOpportunity": true,
+      "hint": "Located in the outdoor plaza area"
+    },
+    "isActive": true
+  },
+  {
+    "name": "Vercel Booth",
+    "description": "Visit the Vercel sponsor booth",
+    "type": "sponsor",
+    "points": 10,
+    "location": {
+      "x": 500,
+      "y": 400,
+      "floor": 1,
+      "zone": "exhibit-hall",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "venueId": "chapel-hill",
+    "metadata": {
+      "company": "Vercel",
+      "hint": "Look for the Next.js creators in the exhibit hall"
+    },
+    "isActive": true
+  },
+  {
+    "name": "Netlify Booth",
+    "description": "Stop by the Netlify sponsor booth",
+    "type": "sponsor",
+    "points": 10,
+    "location": {
+      "x": 600,
+      "y": 400,
+      "floor": 1,
+      "zone": "exhibit-hall",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "venueId": "chapel-hill",
+    "metadata": {
+      "company": "Netlify",
+      "hint": "Find the Jamstack pioneers"
+    },
+    "isActive": true
+  },
+  {
+    "name": "GitHub Booth",
+    "description": "Visit GitHub's booth for swag",
+    "type": "sponsor",
+    "points": 10,
+    "location": {
+      "x": 700,
+      "y": 400,
+      "floor": 1,
+      "zone": "exhibit-hall",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "venueId": "chapel-hill",
+    "metadata": {
+      "company": "GitHub",
+      "hint": "Where the code lives"
+    },
+    "isActive": true
+  },
+  {
+    "name": "Cloudflare Booth",
+    "description": "Check out Cloudflare's latest offerings",
+    "type": "sponsor",
+    "points": 10,
+    "location": {
+      "x": 500,
+      "y": 500,
+      "floor": 1,
+      "zone": "exhibit-hall",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "venueId": "chapel-hill",
+    "metadata": {
+      "company": "Cloudflare",
+      "hint": "Edge computing experts"
+    },
+    "isActive": true
+  },
+  {
+    "name": "AWS Booth",
+    "description": "Visit Amazon Web Services booth",
+    "type": "sponsor",
+    "points": 10,
+    "location": {
+      "x": 600,
+      "y": 500,
+      "floor": 1,
+      "zone": "exhibit-hall",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "venueId": "chapel-hill",
+    "metadata": {
+      "company": "Amazon Web Services",
+      "hint": "The cloud platform giant"
+    },
+    "isActive": true
+  },
+  {
+    "name": "Supabase Booth",
+    "description": "Learn about Supabase at their booth",
+    "type": "sponsor",
+    "points": 10,
+    "location": {
+      "x": 700,
+      "y": 500,
+      "floor": 1,
+      "zone": "exhibit-hall",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "venueId": "chapel-hill",
+    "metadata": {
+      "company": "Supabase",
+      "hint": "Open source Firebase alternative"
+    },
+    "isActive": true
+  },
+  {
+    "name": "Stripe Booth",
+    "description": "Visit Stripe's payment solutions booth",
+    "type": "sponsor",
+    "points": 10,
+    "location": {
+      "x": 500,
+      "y": 600,
+      "floor": 1,
+      "zone": "exhibit-hall",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "venueId": "chapel-hill",
+    "metadata": {
+      "company": "Stripe",
+      "hint": "Payment processing made easy"
+    },
+    "isActive": true
+  },
+  {
+    "name": "Sentry Booth",
+    "description": "Stop by Sentry for error monitoring insights",
+    "type": "sponsor",
+    "points": 10,
+    "location": {
+      "x": 600,
+      "y": 600,
+      "floor": 1,
+      "zone": "exhibit-hall",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "venueId": "chapel-hill",
+    "metadata": {
+      "company": "Sentry",
+      "hint": "Error tracking and performance monitoring"
+    },
+    "isActive": true
+  },
+  {
+    "name": "Prisma Booth",
+    "description": "Learn about Prisma ORM at their booth",
+    "type": "sponsor",
+    "points": 10,
+    "location": {
+      "x": 700,
+      "y": 600,
+      "floor": 1,
+      "zone": "exhibit-hall",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "venueId": "chapel-hill",
+    "metadata": {
+      "company": "Prisma",
+      "hint": "Next-generation ORM"
+    },
+    "isActive": true
+  },
+  {
+    "name": "Tailwind CSS Booth",
+    "description": "Visit the Tailwind CSS team",
+    "type": "sponsor",
+    "points": 10,
+    "location": {
+      "x": 500,
+      "y": 700,
+      "floor": 1,
+      "zone": "exhibit-hall",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "venueId": "chapel-hill",
+    "metadata": {
+      "company": "Tailwind Labs",
+      "hint": "Utility-first CSS framework"
+    },
+    "isActive": true
+  },
+  {
+    "name": "Opening Keynote",
+    "description": "Attend the opening keynote session",
+    "type": "session",
+    "points": 15,
+    "location": {
+      "x": 450,
+      "y": 250,
+      "floor": 2,
+      "zone": "main-hall",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "venueId": "chapel-hill",
+    "metadata": {
+      "room": "Main Hall",
+      "hint": "The biggest session of the conference"
+    },
+    "isActive": true
+  },
+  {
+    "name": "Modern React Patterns",
+    "description": "Learn about modern React development patterns",
+    "type": "session",
+    "points": 15,
+    "location": {
+      "x": 350,
+      "y": 350,
+      "floor": 2,
+      "zone": "conference-rooms",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "venueId": "chapel-hill",
+    "metadata": {
+      "room": "Room 201",
+      "hint": "On the second floor conference area"
+    },
+    "isActive": true
+  },
+  {
+    "name": "TypeScript Deep Dive",
+    "description": "Advanced TypeScript techniques session",
+    "type": "session",
+    "points": 15,
+    "location": {
+      "x": 450,
+      "y": 350,
+      "floor": 2,
+      "zone": "conference-rooms",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "venueId": "chapel-hill",
+    "metadata": {
+      "room": "Room 202",
+      "hint": "Next to the Modern React session"
+    },
+    "isActive": true
+  },
+  {
+    "name": "Web Performance 101",
+    "description": "Optimizing web app performance",
+    "type": "session",
+    "points": 15,
+    "location": {
+      "x": 550,
+      "y": 350,
+      "floor": 2,
+      "zone": "conference-rooms",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "venueId": "chapel-hill",
+    "metadata": {
+      "room": "Room 203",
+      "hint": "Second floor, west wing"
+    },
+    "isActive": true
+  },
+  {
+    "name": "GraphQL Best Practices",
+    "description": "Learn GraphQL implementation strategies",
+    "type": "session",
+    "points": 15,
+    "location": {
+      "x": 350,
+      "y": 450,
+      "floor": 2,
+      "zone": "conference-rooms",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "venueId": "chapel-hill",
+    "metadata": {
+      "room": "Room 204",
+      "hint": "Second floor, near the refreshments"
+    },
+    "isActive": true
+  },
+  {
+    "name": "Serverless Architecture",
+    "description": "Building serverless applications",
+    "type": "session",
+    "points": 15,
+    "location": {
+      "x": 450,
+      "y": 450,
+      "floor": 2,
+      "zone": "conference-rooms",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "venueId": "chapel-hill",
+    "metadata": {
+      "room": "Room 205",
+      "hint": "Central location on second floor"
+    },
+    "isActive": true
+  },
+  {
+    "name": "Web3 and Blockchain",
+    "description": "Introduction to Web3 technologies",
+    "type": "session",
+    "points": 15,
+    "location": {
+      "x": 550,
+      "y": 450,
+      "floor": 2,
+      "zone": "conference-rooms",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "venueId": "chapel-hill",
+    "metadata": {
+      "room": "Room 206",
+      "hint": "Second floor, east wing"
+    },
+    "isActive": true
+  },
+  {
+    "name": "Accessibility in Web Apps",
+    "description": "Making web applications accessible to all",
+    "type": "session",
+    "points": 15,
+    "location": {
+      "x": 350,
+      "y": 550,
+      "floor": 2,
+      "zone": "conference-rooms",
+      "venueId": "chapel-hill",
+      "mapId": "convention-center"
+    },
+    "venueId": "chapel-hill",
+    "metadata": {
+      "room": "Room 207",
+      "hint": "Second floor, south side"
+    },
+    "isActive": true
+  }
+]

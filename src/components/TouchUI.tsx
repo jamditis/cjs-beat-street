@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Hand, Menu } from 'lucide-react';
+import { Hand, Menu, Trophy } from 'lucide-react';
 import { eventBus } from '../lib/EventBus';
 
 export function TouchUI() {
@@ -43,6 +43,11 @@ export function TouchUI() {
     eventBus.emit('menu-button-pressed', {});
   };
 
+  const handleLeaderboardButton = () => {
+    // Emit event to open leaderboard
+    eventBus.emit('leaderboard-button-pressed', {});
+  };
+
   if (!isMobile) return null;
 
   return (
@@ -71,15 +76,28 @@ export function TouchUI() {
         <Hand className="w-7 h-7 text-white" />
       </motion.button>
 
-      {/* Menu button (top-right) */}
-      <motion.button
-        whileTap={{ scale: 0.9 }}
-        onClick={handleMenuButton}
-        className="absolute top-6 right-6 w-12 h-12 bg-paper/90 rounded-full shadow-lg flex items-center justify-center pointer-events-auto active:bg-cream transition-colors"
-        aria-label="Menu"
-      >
-        <Menu className="w-6 h-6 text-ink" />
-      </motion.button>
+      {/* Top-right button group */}
+      <div className="absolute top-6 right-6 flex gap-2 pointer-events-auto">
+        {/* Leaderboard button */}
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={handleLeaderboardButton}
+          className="w-12 h-12 bg-paper/90 rounded-full shadow-lg flex items-center justify-center active:bg-cream transition-colors"
+          aria-label="Leaderboard"
+        >
+          <Trophy className="w-6 h-6 text-teal-600" />
+        </motion.button>
+
+        {/* Menu button */}
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={handleMenuButton}
+          className="w-12 h-12 bg-paper/90 rounded-full shadow-lg flex items-center justify-center active:bg-cream transition-colors"
+          aria-label="Menu"
+        >
+          <Menu className="w-6 h-6 text-ink" />
+        </motion.button>
+      </div>
 
       {/* Joystick zone indicator (subtle) */}
       <div className="absolute bottom-0 left-0 w-1/2 h-1/3 bg-gradient-to-tr from-ink/5 to-transparent pointer-events-none" />

@@ -170,7 +170,12 @@ export class PresenceManager {
   private updateClusters(users: UserPresence[]): void {
     // Clear old cluster labels
     for (const label of this.clusterLabels.values()) {
-      label.destroy();
+      const container = label.getData('container') as Phaser.GameObjects.Container | undefined;
+      if (container) {
+        container.destroy();
+      } else {
+        label.destroy();
+      }
     }
     this.clusterLabels.clear();
 
@@ -260,24 +265,67 @@ export class PresenceManager {
 
   private createClusterLabel(cluster: ClusterGroup): void {
     const count = cluster.attendees.length;
-    const text = this.scene.add.text(cluster.x, cluster.y, `+${count}`, {
-      font: 'bold 16px Source Sans 3',
+
+    // Create container for cluster badge
+    const container = this.scene.add.container(cluster.x, cluster.y);
+    container.setDepth(51);
+
+    // Create background circle
+    const bg = this.scene.add.graphics();
+    bg.fillStyle(0x2a9d8f, 1);
+    bg.fillCircle(0, 0, 24);
+    bg.lineStyle(3, 0xffffff, 1);
+    bg.strokeCircle(0, 0, 24);
+
+    // Create count text
+    const text = this.scene.add.text(0, 0, `${count}`, {
+      font: 'bold 18px Source Sans 3',
       color: '#ffffff',
-      backgroundColor: '#2a9d8f',
-      padding: { x: 8, y: 4 },
+    });
+    text.setOrigin(0.5);
+
+    container.add([bg, text]);
+    container.setInteractive(
+      new Phaser.Geom.Circle(0, 0, 24),
+      Phaser.Geom.Circle.Contains
+    );
+    container.setSize(48, 48);
+
+    // Hover effect
+    container.on('pointerover', () => {
+      this.scene.tweens.add({
+        targets: container,
+        scale: 1.1,
+        duration: 150,
+        ease: 'Back.easeOut',
+      });
+      this.scene.input.setDefaultCursor('pointer');
     });
 
-    text.setOrigin(0.5);
-    text.setDepth(51);
-    text.setInteractive({ useHandCursor: true });
+    container.on('pointerout', () => {
+      this.scene.tweens.add({
+        targets: container,
+        scale: 1.0,
+        duration: 150,
+        ease: 'Power2',
+      });
+      this.scene.input.setDefaultCursor('default');
+    });
 
     // Click to expand cluster
-    text.on('pointerdown', () => {
+    container.on('pointerdown', () => {
       this.expandCluster(cluster);
     });
 
     const clusterId = cluster.attendees.map((a) => a.uid).join('-');
+
+    // Store reference to container (not text)
+    // TypeScript: we need to cast because we're storing Container but type expects Text
     this.clusterLabels.set(clusterId, text);
+
+    // Also store container reference for destruction
+    // We'll add it to the text's data for cleanup
+    text.setData('container', container);
   }
 
   private expandCluster(cluster: ClusterGroup): void {
@@ -387,7 +435,12 @@ export class PresenceManager {
 
     // Clean up cluster labels
     for (const label of this.clusterLabels.values()) {
-      label.destroy();
+      const container = label.getData('container') as Phaser.GameObjects.Container | undefined;
+      if (container) {
+        container.destroy();
+      } else {
+        label.destroy();
+      }
     }
     this.clusterLabels.clear();
   }
