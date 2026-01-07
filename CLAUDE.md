@@ -110,7 +110,7 @@ Copy `.env.example` to `.env` and configure:
 ```
 VITE_FIREBASE_API_KEY=
 VITE_FIREBASE_AUTH_DOMAIN=
-VITE_FIREBASE_PROJECT_ID=beat-street-cjs2026
+VITE_FIREBASE_PROJECT_ID=beat-street-cjs
 VITE_FIREBASE_STORAGE_BUCKET=
 VITE_FIREBASE_MESSAGING_SENDER_ID=
 VITE_FIREBASE_APP_ID=
@@ -121,3 +121,57 @@ VITE_VERIFY_ENDPOINT=
 
 - `BEAT_STREET_BLUEPRINT.md` - Implementation guide with code examples
 - `BEAT_STREET_PLAN.md` - Comprehensive project plan and architecture
+
+---
+
+## Session handoff notes (January 7, 2026)
+
+### Firebase setup completed
+
+**Project:** `beat-street-cjs` (Blaze plan)
+**Console:** https://console.firebase.google.com/u/0/project/beat-street-cjs/overview
+
+| Component | Status |
+|-----------|--------|
+| Web app registered | ✓ `CJS Beat Street` |
+| Authentication | ✓ Email/Password + Google enabled |
+| Firestore database | ✓ Created (nam5 region) |
+| Security rules | ✓ Deployed (`firestore.rules`) |
+| Composite indexes | ✓ Deployed (`firestore.indexes.json`) |
+| Cloud Functions | ✓ `verifyAttendee` deployed (us-central1) |
+
+### Cross-project authentication
+
+Beat Street verifies attendees against a separate CJS2026 registration project:
+
+- **CJS2026 project:** https://console.firebase.google.com/u/0/project/cjs2026/overview
+- **Service account secret:** `CJS2026_SERVICE_ACCOUNT` (set via `firebase functions:secrets:set`)
+- **Function:** `verifyAttendee` in `functions/src/index.ts`
+
+The function accepts a Firebase ID token from CJS2026, verifies it, checks registration status, and stores verified attendees locally.
+
+### Environment configured
+
+`.env` contains real Firebase credentials (not committed to git).
+
+### Remaining tasks
+
+1. **Set VITE_VERIFY_ENDPOINT** — After functions deploy, get the URL:
+   ```bash
+   firebase functions:list
+   ```
+   Then update `.env` with the `verifyAttendee` URL.
+
+2. **Regenerate CJS2026 service account key** — The key was exposed in conversation. Go to CJS2026 → Project settings → Service accounts → Generate new private key, then:
+   ```bash
+   firebase functions:secrets:set CJS2026_SERVICE_ACCOUNT < new-key.json
+   firebase deploy --only functions
+   ```
+
+3. **Delete local service account JSON files** — Remove `*.json` service account files from repo root and add to `.gitignore`.
+
+4. **Test the full auth flow** — Run `npm run dev` and test Google sign-in.
+
+### Node version
+
+Project requires **Node 22**. Cloud Functions runtime updated from Node 18 to Node 22 in `firebase.json` and `functions/package.json`.
