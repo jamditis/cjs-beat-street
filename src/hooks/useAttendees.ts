@@ -10,7 +10,10 @@ export interface UseAttendeesOptions {
   autoFetch?: boolean;
 }
 
-export function useAttendees(options: UseAttendeesOptions = {}) {
+// Default options object to prevent new object creation on each render
+const DEFAULT_OPTIONS: UseAttendeesOptions = {};
+
+export function useAttendees(options: UseAttendeesOptions = DEFAULT_OPTIONS) {
   const [nearbyAttendees, setNearbyAttendees] = useState<UserPresence[]>([]);
   const [selectedAttendee, setSelectedAttendee] = useState<AttendeeDetails | null>(null);
   const [loading, setLoading] = useState(false);
@@ -26,19 +29,7 @@ export function useAttendees(options: UseAttendeesOptions = {}) {
     return unsubscribe;
   }, []);
 
-  // Listen for attendee selection
-  useEffect(() => {
-    const unsubscribe = eventBus.on('attendee-selected', (data: unknown) => {
-      const selectionData = data as { uid: string };
-      if (options.autoFetch) {
-        fetchAttendeeDetails(selectionData.uid);
-      }
-    });
-
-    return unsubscribe;
-  }, [options.autoFetch]);
-
-  // Fetch full attendee details
+  // Fetch full attendee details (defined before useEffect that depends on it)
   const fetchAttendeeDetails = useCallback(async (uid: string) => {
     setLoading(true);
     setError(null);
@@ -71,6 +62,21 @@ export function useAttendees(options: UseAttendeesOptions = {}) {
       setLoading(false);
     }
   }, [nearbyAttendees]);
+
+  // Extract autoFetch to use as a stable dependency
+  const { autoFetch } = options;
+
+  // Listen for attendee selection
+  useEffect(() => {
+    const unsubscribe = eventBus.on('attendee-selected', (data: unknown) => {
+      const selectionData = data as { uid: string };
+      if (autoFetch) {
+        fetchAttendeeDetails(selectionData.uid);
+      }
+    });
+
+    return unsubscribe;
+  }, [autoFetch, fetchAttendeeDetails]);
 
   // Select an attendee
   const selectAttendee = useCallback((uid: string | null) => {

@@ -16,7 +16,7 @@ export interface PresenceData {
   zone: string;
   shareLocation: boolean;
   status: 'active' | 'idle' | 'away';
-  lastSeen: ReturnType<typeof serverTimestamp>;
+  updatedAt: ReturnType<typeof serverTimestamp>;
 }
 
 export function updatePresence(
@@ -27,7 +27,7 @@ export function updatePresence(
     doc(db, 'presence', uid),
     {
       ...data,
-      lastSeen: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     },
     { merge: true }
   );

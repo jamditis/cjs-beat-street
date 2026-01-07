@@ -3,20 +3,16 @@ import { eventBus } from '../../lib/EventBus';
 import { Player } from '../entities/Player';
 import { CameraController } from '../systems/CameraController';
 import { InputManager } from '../systems/InputManager';
-
-interface POI {
-  x: number;
-  y: number;
-  name: string;
-  type: string;
-  sprite?: Phaser.GameObjects.Arc;
-  label?: Phaser.GameObjects.Text;
-}
+import { POIManager } from '../systems/POIManager';
+import { PresenceManager } from '../systems/PresenceManager';
+import { POIType, POIData } from '../../types/poi';
 
 export class ConventionCenterScene extends Phaser.Scene {
   private player!: Player;
   private cameraController!: CameraController;
   private inputManager!: InputManager;
+  private poiManager!: POIManager;
+  private presenceManager!: PresenceManager;
   private currentFloor = 1;
 
   // World bounds
@@ -25,7 +21,6 @@ export class ConventionCenterScene extends Phaser.Scene {
 
   // UI Elements
   private floorText!: Phaser.GameObjects.Text;
-  private pois: POI[] = [];
 
   // Floor transition
   private isTransitioning = false;
@@ -77,6 +72,23 @@ export class ConventionCenterScene extends Phaser.Scene {
 
     // Fade in camera
     this.cameraController.fadeIn(500);
+
+    // Initialize POIManager
+    this.poiManager = new POIManager({
+      scene: this,
+      showLabels: true,
+      showDistances: false,
+    });
+
+    // Initialize PresenceManager for attendee markers
+    // Enabled state is controlled via EventBus events (toggle-attendee-markers)
+    // when user grants/revokes location sharing consent
+    this.presenceManager = new PresenceManager({
+      scene: this,
+      enabled: this.getLocationConsentFromStorage(),
+      maxVisibleMarkers: 50,
+      clusterDistance: 80,
+    });
 
     // Create UI elements
     this.createUI();
@@ -208,12 +220,8 @@ export class ConventionCenterScene extends Phaser.Scene {
   }
 
   private createFloorLayout(floor: number): void {
-    // Clear existing POIs
-    this.pois.forEach((poi) => {
-      poi.sprite?.destroy();
-      poi.label?.destroy();
-    });
-    this.pois = [];
+    // Clear existing POIs via POIManager
+    this.poiManager.clearAll();
 
     // Create rooms based on floor
     switch (floor) {
@@ -223,10 +231,10 @@ export class ConventionCenterScene extends Phaser.Scene {
         this.createRoom(1100, 200, 300, 300, 'Exhibit Hall A', 0xf4a261);
 
         // POIs for Floor 1
-        this.addPOI(400, 350, 'Main Stage', 'session');
-        this.addPOI(850, 300, 'Check-in Desk', 'info');
-        this.addPOI(1250, 350, 'Sponsor Booth A', 'sponsor');
-        this.addPOI(400, 600, 'Coffee Bar', 'food');
+        this.registerPOI('main-stage', 400, 350, 'Main Stage', POIType.SESSION, 1);
+        this.registerPOI('check-in-desk', 850, 300, 'Check-in Desk', POIType.INFO, 1);
+        this.registerPOI('sponsor-booth-a', 1250, 350, 'Sponsor Booth A', POIType.SPONSOR, 1);
+        this.registerPOI('coffee-bar', 400, 600, 'Coffee Bar', POIType.FOOD, 1);
         break;
 
       case 2:
@@ -235,10 +243,10 @@ export class ConventionCenterScene extends Phaser.Scene {
         this.createRoom(1100, 200, 300, 350, 'Networking Lounge', 0xe9c46a);
 
         // POIs for Floor 2
-        this.addPOI(375, 375, 'Workshop 2A', 'session');
-        this.addPOI(825, 375, 'Workshop 2B', 'session');
-        this.addPOI(1250, 375, 'Lounge Seating', 'social');
-        this.addPOI(500, 700, 'Refreshments', 'food');
+        this.registerPOI('workshop-2a', 375, 375, 'Workshop 2A', POIType.SESSION, 2);
+        this.registerPOI('workshop-2b', 825, 375, 'Workshop 2B', POIType.SESSION, 2);
+        this.registerPOI('lounge-seating', 1250, 375, 'Lounge Seating', POIType.SOCIAL, 2);
+        this.registerPOI('refreshments', 500, 700, 'Refreshments', POIType.FOOD, 2);
         break;
 
       case 3:
@@ -247,9 +255,9 @@ export class ConventionCenterScene extends Phaser.Scene {
         this.createRoom(1150, 200, 250, 250, 'Green Room', 0xe9c46a);
 
         // POIs for Floor 3
-        this.addPOI(450, 400, 'Keynote Stage', 'session');
-        this.addPOI(950, 325, 'VIP Area', 'social');
-        this.addPOI(1275, 325, 'Speaker Prep', 'info');
+        this.registerPOI('keynote-stage', 450, 400, 'Keynote Stage', POIType.SESSION, 3);
+        this.registerPOI('vip-area', 950, 325, 'VIP Area', POIType.SOCIAL, 3);
+        this.registerPOI('speaker-prep', 1275, 325, 'Speaker Prep', POIType.INFO, 3);
         break;
     }
   }
@@ -279,79 +287,28 @@ export class ConventionCenterScene extends Phaser.Scene {
       .setDepth(1);
   }
 
-  private addPOI(x: number, y: number, name: string, type: string): void {
-    const color = this.getPoiColor(type);
+  /**
+   * Register a POI with the POIManager
+   */
+  private registerPOI(
+    id: string,
+    x: number,
+    y: number,
+    name: string,
+    type: POIType,
+    floor: number
+  ): void {
+    const poiData: POIData = {
+      id,
+      type,
+      name,
+      position: { x, y, floor, zone: 'convention-center' },
+      floor,
+      isActive: true,
+      isPulsing: false,
+    };
 
-    // Create POI sprite
-    const poi = this.add
-      .circle(x, y, 25, color, 0.7)
-      .setStrokeStyle(3, color)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(10);
-
-    // Create label
-    const label = this.add
-      .text(x, y + 40, name, {
-        font: '13px Source Sans 3',
-        color: '#2C3E50',
-        backgroundColor: '#ffffff',
-        padding: { x: 4, y: 2 },
-      })
-      .setOrigin(0.5)
-      .setDepth(11);
-
-    const poiData: POI = { x, y, name, type, sprite: poi, label };
-    this.pois.push(poiData);
-
-    // Add hover effects
-    poi.on('pointerover', () => {
-      poi.setScale(1.2);
-      poi.setFillStyle(color, 1);
-      label.setScale(1.1);
-    });
-
-    poi.on('pointerout', () => {
-      poi.setScale(1);
-      poi.setFillStyle(color, 0.7);
-      label.setScale(1);
-    });
-
-    poi.on('pointerdown', () => {
-      // Emit POI selection event
-      eventBus.emit('poi-selected', {
-        poiId: name.toLowerCase().replace(/\s+/g, '-'),
-        type,
-        data: { name, floor: this.currentFloor, x, y },
-      });
-
-      // Visual feedback
-      this.cameraController.shake(50, 0.003);
-
-      // Highlight effect
-      this.tweens.add({
-        targets: poi,
-        scale: { from: 1.3, to: 1 },
-        duration: 300,
-        ease: 'Back.easeOut',
-      });
-    });
-  }
-
-  private getPoiColor(type: string): number {
-    switch (type) {
-      case 'session':
-        return 0x2a9d8f;
-      case 'sponsor':
-        return 0xe9c46a;
-      case 'food':
-        return 0xf4a261;
-      case 'social':
-        return 0xe76f51;
-      case 'info':
-        return 0x457b9d;
-      default:
-        return 0x2c3e50;
-    }
+    this.poiManager.registerPOI(poiData);
   }
 
   private handleFloorChange(floor: unknown): void {
@@ -383,17 +340,33 @@ export class ConventionCenterScene extends Phaser.Scene {
     }
   }
 
-  update(_time: number, _delta: number): void {
+  update(time: number, _delta: number): void {
     // Update player
     this.player.update();
 
     // Update camera
     this.cameraController.update();
+
+    // Update presence markers
+    this.presenceManager.update(time);
+  }
+
+  private getLocationConsentFromStorage(): boolean {
+    const consent = localStorage.getItem('location-consent');
+    return consent === 'true';
   }
 
   shutdown(): void {
     // Cleanup
     eventBus.off('switch-floor', this.handleFloorChange.bind(this));
+
+    if (this.poiManager) {
+      this.poiManager.destroy();
+    }
+
+    if (this.presenceManager) {
+      this.presenceManager.destroy();
+    }
 
     if (this.player) {
       this.player.destroy();

@@ -3,11 +3,16 @@ import { eventBus } from '../../lib/EventBus';
 import { Player } from '../entities/Player';
 import { CameraController } from '../systems/CameraController';
 import { InputManager } from '../systems/InputManager';
+import { PresenceManager } from '../systems/PresenceManager';
+import { POIManager } from '../systems/POIManager';
+import { POIType, POIData } from '../../types/poi';
 
 export class CityMapScene extends Phaser.Scene {
   private player!: Player;
   private cameraController!: CameraController;
   private inputManager!: InputManager;
+  private presenceManager!: PresenceManager;
+  private poiManager!: POIManager;
   private currentZone = 'downtown';
 
   // World bounds
@@ -70,11 +75,31 @@ export class CityMapScene extends Phaser.Scene {
     // Make camera follow player with smooth lerp
     this.cameraController.followTarget(this.player.sprite, 0.1);
 
+    // Initialize POIManager for outdoor landmarks
+    this.poiManager = new POIManager({
+      scene: this,
+      showLabels: true,
+      showDistances: false,
+    });
+
     // Create UI elements (fixed to camera)
     this.createUI();
 
-    // Add buildings and POIs
+    // Add buildings (Convention Center has custom interaction)
     this.createBuildings();
+
+    // Register outdoor POIs for landmarks
+    this.createOutdoorPOIs();
+
+    // Initialize PresenceManager for attendee markers
+    // Enabled state is controlled via EventBus events (toggle-attendee-markers)
+    // when user grants/revokes location sharing consent
+    this.presenceManager = new PresenceManager({
+      scene: this,
+      enabled: this.getLocationConsentFromStorage(),
+      maxVisibleMarkers: 50,
+      clusterDistance: 80,
+    });
 
     // Add instructions
     this.createInstructions();
@@ -197,6 +222,47 @@ export class CityMapScene extends Phaser.Scene {
       .setOrigin(0.5);
   }
 
+  /**
+   * Create outdoor POIs for city landmarks using POIManager
+   */
+  private createOutdoorPOIs(): void {
+    // Register district landmarks as POIs
+    // These POIs provide additional interactivity for the city map
+
+    // Downtown landmarks
+    this.registerPOI('tech-hub', 800, 300, 'Tech Hub', POIType.LANDMARK, 'downtown');
+    this.registerPOI('convention-center-poi', 400, 400, 'Convention Center', POIType.LANDMARK, 'downtown');
+
+    // Cultural district landmarks
+    this.registerPOI('museum', 1200, 500, 'Museum', POIType.LANDMARK, 'cultural-district');
+
+    // Waterfront landmarks
+    this.registerPOI('marina', 600, 1100, 'Marina', POIType.LANDMARK, 'waterfront');
+  }
+
+  /**
+   * Register a POI with the POIManager
+   */
+  private registerPOI(
+    id: string,
+    x: number,
+    y: number,
+    name: string,
+    type: POIType,
+    zone: string
+  ): void {
+    const poiData: POIData = {
+      id,
+      type,
+      name,
+      position: { x, y, zone },
+      isActive: true,
+      isPulsing: false,
+    };
+
+    this.poiManager.registerPOI(poiData);
+  }
+
   private createUI(): void {
     // Title - fixed to camera
     this.add
@@ -306,10 +372,26 @@ export class CityMapScene extends Phaser.Scene {
       });
       this.lastPositionUpdate = time;
     }
+
+    // Update presence markers
+    this.presenceManager.update(time);
+  }
+
+  private getLocationConsentFromStorage(): boolean {
+    const consent = localStorage.getItem('location-consent');
+    return consent === 'true';
   }
 
   shutdown(): void {
     // Cleanup when scene shuts down
+    if (this.poiManager) {
+      this.poiManager.destroy();
+    }
+
+    if (this.presenceManager) {
+      this.presenceManager.destroy();
+    }
+
     if (this.player) {
       this.player.destroy();
     }

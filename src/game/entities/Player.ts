@@ -9,6 +9,7 @@ export interface PlayerConfig {
   width?: number;
   height?: number;
   inputManager?: InputManager;
+  spriteKey?: string; // Optional: use a preloaded sprite texture instead of generated placeholder
 }
 
 export class Player {
@@ -33,23 +34,11 @@ export class Player {
     this.height = config.height || 48;
     this.inputManager = config.inputManager;
 
-    // Create a placeholder sprite using a rectangle
-    // In the future, this can be replaced with an actual sprite
-    const graphics = this.scene.add.graphics();
-    graphics.fillStyle(config.color || 0x2a9d8f, 1);
-
-    // Draw an isometric-style rectangle (diamond shape for isometric perspective)
-    graphics.fillRect(0, 0, this.width, this.height);
-
-    // Add a simple character indication (head)
-    graphics.fillStyle(0xf4a261, 1);
-    graphics.fillCircle(this.width / 2, 12, 8);
-
-    graphics.generateTexture('player-placeholder', this.width, this.height);
-    graphics.destroy();
+    // Determine which texture to use: preloaded sprite or generated placeholder
+    const textureKey = this.getPlayerTexture(config);
 
     // Create the physics sprite
-    this.sprite = this.scene.physics.add.sprite(config.x, config.y, 'player-placeholder');
+    this.sprite = this.scene.physics.add.sprite(config.x, config.y, textureKey);
     this.sprite.setCollideWorldBounds(true);
     this.sprite.setDamping(true);
     this.sprite.setDrag(0.8);
@@ -59,6 +48,31 @@ export class Player {
     if (!this.inputManager) {
       this.setupInput();
     }
+  }
+
+  private getPlayerTexture(config: PlayerConfig): string {
+    // If a sprite key is provided and the texture exists, use it
+    if (config.spriteKey && this.scene.textures.exists(config.spriteKey)) {
+      return config.spriteKey;
+    }
+
+    // Generate a placeholder texture if not already created
+    if (!this.scene.textures.exists('player-placeholder')) {
+      const graphics = this.scene.add.graphics();
+      graphics.fillStyle(config.color || 0x2a9d8f, 1);
+
+      // Draw an isometric-style rectangle (diamond shape for isometric perspective)
+      graphics.fillRect(0, 0, this.width, this.height);
+
+      // Add a simple character indication (head)
+      graphics.fillStyle(0xf4a261, 1);
+      graphics.fillCircle(this.width / 2, 12, 8);
+
+      graphics.generateTexture('player-placeholder', this.width, this.height);
+      graphics.destroy();
+    }
+
+    return 'player-placeholder';
   }
 
   private setupInput(): void {

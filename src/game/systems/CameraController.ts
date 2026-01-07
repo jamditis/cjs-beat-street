@@ -29,6 +29,13 @@ export class CameraController {
   private zoomInKey: Phaser.Input.Keyboard.Key | null = null;
   private zoomOutKey: Phaser.Input.Keyboard.Key | null = null;
 
+  // Pinch-to-zoom state
+  private isPinching = false;
+  private pinchStartDistance = 0;
+  private pinchStartZoom = 1;
+  private readonly pinchDeadZone = 10; // Minimum pixel distance change to trigger zoom
+  private readonly joystickZone = { x: 0, y: 0, width: 200, height: 200 }; // Bottom-left area for joystick
+
   constructor(scene: Phaser.Scene, config: CameraConfig) {
     this.scene = scene;
     this.camera = config.camera;
@@ -47,6 +54,9 @@ export class CameraController {
 
     // Setup zoom controls
     this.setupZoomControls();
+
+    // Setup pinch-to-zoom for mobile
+    this.setupPinchZoom();
 
     // Setup deadzone for smoother following
     if (config.deadzone) {
@@ -82,6 +92,115 @@ export class CameraController {
       }
     });
   }
+
+  private setupPinchZoom(): void {
+    // Update joystick zone based on screen size (bottom-left quadrant)
+    this.updateJoystickZone();
+
+    // Listen for pointer events
+    this.scene.input.on('pointerdown', this.onPointerDown, this);
+    this.scene.input.on('pointermove', this.onPointerMove, this);
+    this.scene.input.on('pointerup', this.onPointerUp, this);
+    this.scene.input.on('pointercancel', this.onPointerUp, this);
+
+    // Handle screen resize
+    this.scene.scale.on('resize', this.updateJoystickZone, this);
+  }
+
+  private updateJoystickZone(): void {
+    // Joystick is typically in the bottom-left corner
+    // Define a zone where single-touch is reserved for the joystick
+    const gameHeight = this.scene.scale.height;
+    this.joystickZone.x = 0;
+    this.joystickZone.y = gameHeight - 200;
+    this.joystickZone.width = 200;
+    this.joystickZone.height = 200;
+  }
+
+  private isInJoystickZone(x: number, y: number): boolean {
+    return (
+      x >= this.joystickZone.x &&
+      x <= this.joystickZone.x + this.joystickZone.width &&
+      y >= this.joystickZone.y &&
+      y <= this.joystickZone.y + this.joystickZone.height
+    );
+  }
+
+  private getActivePointers(): Phaser.Input.Pointer[] {
+    const pointers: Phaser.Input.Pointer[] = [];
+    const input = this.scene.input;
+
+    // Check all available pointers
+    if (input.pointer1?.isDown) pointers.push(input.pointer1);
+    if (input.pointer2?.isDown) pointers.push(input.pointer2);
+    if (input.pointer3?.isDown) pointers.push(input.pointer3);
+    if (input.pointer4?.isDown) pointers.push(input.pointer4);
+
+    return pointers;
+  }
+
+  private getDistanceBetweenPointers(p1: Phaser.Input.Pointer, p2: Phaser.Input.Pointer): number {
+    const dx = p1.x - p2.x;
+    const dy = p1.y - p2.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  private onPointerDown = (): void => {
+    const pointers = this.getActivePointers();
+
+    // Need exactly two pointers for pinch-to-zoom
+    if (pointers.length === 2) {
+      // Check if either pointer is in the joystick zone - if so, don't start pinch
+      // This prevents conflicts when user is moving and accidentally touches elsewhere
+      const pointer1InJoystick = this.isInJoystickZone(pointers[0].x, pointers[0].y);
+      const pointer2InJoystick = this.isInJoystickZone(pointers[1].x, pointers[1].y);
+
+      if (pointer1InJoystick || pointer2InJoystick) {
+        return;
+      }
+
+      this.isPinching = true;
+      this.pinchStartDistance = this.getDistanceBetweenPointers(pointers[0], pointers[1]);
+      this.pinchStartZoom = this.currentZoom;
+    }
+  };
+
+  private onPointerMove = (): void => {
+    if (!this.isPinching) return;
+
+    const pointers = this.getActivePointers();
+
+    // Need two pointers to continue pinch
+    if (pointers.length !== 2) {
+      this.isPinching = false;
+      return;
+    }
+
+    const currentDistance = this.getDistanceBetweenPointers(pointers[0], pointers[1]);
+    const distanceDelta = currentDistance - this.pinchStartDistance;
+
+    // Apply dead zone to prevent accidental small zooms
+    if (Math.abs(distanceDelta) < this.pinchDeadZone) {
+      return;
+    }
+
+    // Calculate zoom based on pinch distance ratio
+    // Spreading fingers apart (increasing distance) = zoom in
+    // Pinching fingers together (decreasing distance) = zoom out
+    const zoomRatio = currentDistance / this.pinchStartDistance;
+    const newZoom = this.pinchStartZoom * zoomRatio;
+
+    this.setZoom(newZoom);
+  };
+
+  private onPointerUp = (): void => {
+    const pointers = this.getActivePointers();
+
+    // If we have fewer than 2 pointers, end the pinch
+    if (pointers.length < 2) {
+      this.isPinching = false;
+    }
+  };
 
   followTarget(
     target: Phaser.GameObjects.GameObject,

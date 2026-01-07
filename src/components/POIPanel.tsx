@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -25,6 +25,10 @@ interface POIEventData {
 export function POIPanel() {
   const [selectedPOI, setSelectedPOI] = useState<POIEventData | null>(null);
 
+  const handleClose = useCallback(() => {
+    setSelectedPOI(null);
+  }, []);
+
   useEffect(() => {
     const unsubscribe = eventBus.on('poi-selected', (poi: unknown) => {
       setSelectedPOI(poi as POIEventData);
@@ -32,6 +36,20 @@ export function POIPanel() {
 
     return unsubscribe;
   }, []);
+
+  // Handle Escape key to close panel
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && selectedPOI) {
+        handleClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedPOI, handleClose]);
 
   const handleNavigate = () => {
     if (selectedPOI) {
@@ -235,10 +253,14 @@ export function POIPanel() {
           exit={{ x: '100%' }}
           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
           className="fixed right-0 top-0 h-full w-80 bg-paper shadow-xl z-50 p-6"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="poi-panel-title"
         >
           <button
-            onClick={() => setSelectedPOI(null)}
-            className="absolute top-4 right-4 p-2 rounded-full hover:bg-cream transition-colors"
+            onClick={handleClose}
+            className="absolute top-4 right-4 p-2 rounded-full hover:bg-cream transition-colors focus:outline-none focus:ring-2 focus:ring-teal-600"
+            aria-label="Close panel"
           >
             <X className="w-5 h-5 text-ink" />
           </button>
@@ -250,7 +272,7 @@ export function POIPanel() {
             </span>
           </div>
 
-          <h2 className="font-display text-2xl text-ink mb-2">
+          <h2 id="poi-panel-title" className="font-display text-2xl text-ink mb-2">
             {selectedPOI.data.name}
           </h2>
 

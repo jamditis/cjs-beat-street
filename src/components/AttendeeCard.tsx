@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, MapPin, Building2, Hand, CheckCircle } from 'lucide-react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../services/firebase';
 import { eventBus, UserPresence } from '../lib/EventBus';
 
 interface AttendeeDetails extends UserPresence {
@@ -11,43 +13,88 @@ interface AttendeeDetails extends UserPresence {
 export function AttendeeCard() {
   const [selectedAttendee, setSelectedAttendee] = useState<AttendeeDetails | null>(null);
   const [waveStatus, setWaveStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
+  const nearbyUsersRef = useRef<UserPresence[]>([]);
 
+  // Keep track of nearby users from presence updates
   useEffect(() => {
-    const unsubscribe = eventBus.on('attendee-selected', (data: unknown) => {
-      const selectionData = data as { uid: string };
-      // In real implementation, fetch full attendee details from Firebase
-      // For now, we'll use the data from presence-update
-      fetchAttendeeDetails(selectionData.uid);
+    const unsubscribe = eventBus.on('presence-update', (data: unknown) => {
+      const presenceData = data as { users: UserPresence[] };
+      nearbyUsersRef.current = presenceData.users;
     });
 
     return unsubscribe;
   }, []);
 
-  const fetchAttendeeDetails = (uid: string) => {
-    // Subscribe to presence updates to get attendee data
-    const unsubscribe = eventBus.on('presence-update', (data: unknown) => {
-      const presenceData = data as { users: UserPresence[] };
-      const attendee = presenceData.users.find((u) => u.uid === uid);
+  // Fetch attendee details from presence data or Firestore
+  const fetchAttendeeDetails = useCallback(async (uid: string) => {
+    // First, check if the user is in our nearby users list
+    const nearbyUser = nearbyUsersRef.current.find((u) => u.uid === uid);
 
-      if (attendee) {
-        // In real implementation, fetch additional details from verified_attendees collection
+    if (nearbyUser) {
+      // Found in nearby users, use that data
+      setSelectedAttendee({
+        ...nearbyUser,
+        organization: undefined,
+        photoURL: undefined,
+      });
+    }
+
+    // Fetch additional details from Firestore (verified_attendees or presence)
+    try {
+      const presenceDoc = await getDoc(doc(db, 'presence', uid));
+      if (presenceDoc.exists()) {
+        const presenceData = presenceDoc.data() as UserPresence;
+
+        // Try to get extended info from verified_attendees
+        const attendeeDoc = await getDoc(doc(db, 'verified_attendees', uid));
+        const attendeeData = attendeeDoc.exists() ? attendeeDoc.data() : {};
+
         setSelectedAttendee({
-          ...attendee,
-          organization: 'Loading...', // Would be fetched from Firebase
-          photoURL: undefined, // Would be fetched from Firebase
+          ...presenceData,
+          uid,
+          organization: attendeeData.organization,
+          photoURL: attendeeData.photoURL,
         });
-        unsubscribe();
+      } else if (!nearbyUser) {
+        // User not found in presence or nearby, close the card
+        setSelectedAttendee(null);
       }
+    } catch (error) {
+      console.error('Error fetching attendee details:', error);
+      // If we already have nearby user data, keep showing it
+      if (!nearbyUser) {
+        setSelectedAttendee(null);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = eventBus.on('attendee-selected', (data: unknown) => {
+      const selectionData = data as { uid: string };
+      fetchAttendeeDetails(selectionData.uid);
     });
 
-    // Cleanup after a short time if not found
-    setTimeout(unsubscribe, 5000);
-  };
+    return unsubscribe;
+  }, [fetchAttendeeDetails]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setSelectedAttendee(null);
     setWaveStatus('idle');
-  };
+  }, []);
+
+  // Handle Escape key to close panel
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && selectedAttendee) {
+        handleClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedAttendee, handleClose]);
 
   const handleWave = async () => {
     if (!selectedAttendee || waveStatus !== 'idle') return;
@@ -117,6 +164,9 @@ export function AttendeeCard() {
           exit={{ x: '100%' }}
           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
           className="fixed right-0 top-0 h-full w-80 bg-paper shadow-xl z-50 p-6 flex flex-col"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="attendee-card-title"
         >
           <button
             onClick={handleClose}
@@ -150,7 +200,7 @@ export function AttendeeCard() {
               )}
 
               <div className="flex-1 min-w-0">
-                <h2 className="font-display text-xl text-ink mb-1 truncate">
+                <h2 id="attendee-card-title" className="font-display text-xl text-ink mb-1 truncate">
                   {selectedAttendee.displayName}
                 </h2>
                 {getStatusBadge(selectedAttendee.status)}

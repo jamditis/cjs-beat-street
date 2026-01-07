@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 40">
+  <!-- Networking/people location marker -->
+  <defs>
+    <linearGradient id="networkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3498DB"/>
+      <stop offset="100%" style="stop-color:#2980B9"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Shadow -->
+  <ellipse cx="16" cy="38" rx="8" ry="2" fill="#2C3E50" opacity="0.3"/>
+
+  <!-- Pin body -->
+  <path d="M16 36
+           L16 28
+           C16 28 28 22 28 12
+           C28 5 22 0 16 0
+           C10 0 4 5 4 12
+           C4 22 16 28 16 28
+           Z"
+        fill="url(#networkGrad)"
+        stroke="#1F6AA5"
+        stroke-width="1.5"/>
+
+  <!-- People icon -->
+  <g fill="#F5F0E6">
+    <!-- Center person -->
+    <circle cx="16" cy="8" r="2.5"/>
+    <ellipse cx="16" cy="14" rx="3" ry="2"/>
+    <!-- Left person (smaller) -->
+    <circle cx="11" cy="10" r="1.5"/>
+    <ellipse cx="11" cy="14" rx="2" ry="1.5"/>
+    <!-- Right person (smaller) -->
+    <circle cx="21" cy="10" r="1.5"/>
+    <ellipse cx="21" cy="14" rx="2" ry="1.5"/>
+  </g>
+</svg>

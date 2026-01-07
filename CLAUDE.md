@@ -43,12 +43,23 @@ src/
 ├── game/
 │   ├── scenes/       # Phaser scenes (Boot, Preload, CityMap, ConventionCenter)
 │   ├── entities/     # Player, NPCs, interactive objects
-│   ├── systems/      # Presence, POI, navigation systems
+│   ├── systems/      # CameraController, POIManager, PresenceManager, MapLoader
 │   └── config.ts     # Phaser game configuration
 ├── components/       # React UI overlays (panels, modals, selectors)
 ├── services/         # Firebase, auth, presence, offline storage
 ├── hooks/            # React hooks (useGameEvents, usePresence, useOffline)
+├── types/            # TypeScript type definitions (POI, presence, game)
 └── lib/              # Shared utilities (EventBus)
+
+public/
+├── assets/
+│   ├── tilesets/     # Penzilla isometric sprites (557 files)
+│   ├── maps/         # Tiled JSON map data
+│   └── ui/           # UI icons (POI markers, controls, loading spinner)
+├── icon-*.png        # PWA icons (48-512px)
+├── favicon.svg       # Browser tab icon
+├── logo.svg          # Brand logo
+└── splash.svg        # PWA splash screen
 ```
 
 ### Key Patterns
@@ -83,9 +94,10 @@ parchment:  #F0EBE0  (secondary backgrounds)
 
 ## Game Assets
 
-- Located in `public/assets/tilesets/` (557 isometric sprites)
+- Located in `public/assets/tilesets/` (720+ isometric sprites)
 - Penzilla Giant City Builder asset pack
 - 2:1 isometric perspective
+- UI icons in `public/assets/ui/` (POI markers by type, controls)
 
 ## Firebase Collections
 
@@ -121,6 +133,7 @@ VITE_VERIFY_ENDPOINT=
 
 - `BEAT_STREET_BLUEPRINT.md` - Implementation guide with code examples
 - `BEAT_STREET_PLAN.md` - Comprehensive project plan and architecture
+- `PRESENCE_SYSTEM_INTEGRATION.md` - Presence and location sharing implementation
 
 ---
 
@@ -168,9 +181,21 @@ The function accepts a Firebase ID token from CJS2026, verifies it, checks regis
    firebase deploy --only functions
    ```
 
-3. **Delete local service account JSON files** — Remove `*.json` service account files from repo root and add to `.gitignore`.
+3. ~~**Delete local service account JSON files**~~ — ✓ Done. `.gitignore` updated with patterns for `*-firebase-adminsdk-*.json`.
 
 4. **Test the full auth flow** — Run `npm run dev` and test Google sign-in.
+
+### Completed this session
+
+- Fixed Firebase config (`lastSeen` → `updatedAt` field name)
+- Integrated POIManager and PresenceManager into game scenes
+- Implemented pinch-to-zoom for mobile (with joystick conflict prevention)
+- Fixed App.tsx auth flow (guest mode, consent modal)
+- Added ErrorBoundary and accessibility improvements (focus trap, ARIA)
+- Created PWA icons (12 PNG sizes from SVG source)
+- Created UI icons (POI markers, controls, loading spinner)
+- PreloadScene now loads 35+ Penzilla sprites
+- Build verified: `npm run build` passes
 
 ### Node version
 

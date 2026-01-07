@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50">
+  <!-- Loading spinner animation -->
+  <style>
+    .spinner {
+      transform-origin: center;
+      animation: rotate 1.5s linear infinite;
+    }
+    @keyframes rotate {
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+
+  <!-- Background circle -->
+  <circle cx="25" cy="25" r="20" fill="none" stroke="#F0EBE0" stroke-width="4"/>
+
+  <!-- Animated arc -->
+  <circle class="spinner" cx="25" cy="25" r="20" fill="none"
+          stroke="#2A9D8F" stroke-width="4"
+          stroke-linecap="round"
+          stroke-dasharray="80 50"/>
+</svg>

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 40">
+  <!-- Food/dining location marker -->
+  <defs>
+    <linearGradient id="foodGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F4A261"/>
+      <stop offset="100%" style="stop-color:#E9924F"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Shadow -->
+  <ellipse cx="16" cy="38" rx="8" ry="2" fill="#2C3E50" opacity="0.3"/>
+
+  <!-- Pin body -->
+  <path d="M16 36
+           L16 28
+           C16 28 28 22 28 12
+           C28 5 22 0 16 0
+           C10 0 4 5 4 12
+           C4 22 16 28 16 28
+           Z"
+        fill="url(#foodGrad)"
+        stroke="#D98340"
+        stroke-width="1.5"/>
+
+  <!-- Fork and knife icon -->
+  <g fill="#F5F0E6" stroke="#F5F0E6" stroke-width="0.5">
+    <!-- Fork -->
+    <path d="M12 6 L12 10 L11 10 L11 6 M13 6 L13 10 L12 10 L12 6 M14 6 L14 10 L13 10 L13 6 M12.5 10 L12.5 17" stroke-width="1"/>
+    <!-- Knife -->
+    <path d="M19 6 L19 17 M18 6 Q18 10 19 10" stroke-width="1.5"/>
+  </g>
+</svg>

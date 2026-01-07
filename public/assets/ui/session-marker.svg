@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 40">
+  <!-- Session/talk location marker (calendar icon inside) -->
+  <defs>
+    <linearGradient id="sessionGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#E76F51"/>
+      <stop offset="100%" style="stop-color:#D64933"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Shadow -->
+  <ellipse cx="16" cy="38" rx="8" ry="2" fill="#2C3E50" opacity="0.3"/>
+
+  <!-- Pin body -->
+  <path d="M16 36
+           L16 28
+           C16 28 28 22 28 12
+           C28 5 22 0 16 0
+           C10 0 4 5 4 12
+           C4 22 16 28 16 28
+           Z"
+        fill="url(#sessionGrad)"
+        stroke="#C04328"
+        stroke-width="1.5"/>
+
+  <!-- Calendar icon inside -->
+  <rect x="10" y="6" width="12" height="10" rx="1" fill="#F5F0E6"/>
+  <rect x="10" y="6" width="12" height="3" fill="#D64933"/>
+  <circle cx="13" cy="12" r="1" fill="#2C3E50"/>
+  <circle cx="16" cy="12" r="1" fill="#2C3E50"/>
+  <circle cx="19" cy="12" r="1" fill="#2C3E50"/>
+</svg>
