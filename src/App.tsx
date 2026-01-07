@@ -5,6 +5,7 @@ import { POIPanel } from './components/POIPanel';
 import { FloorSelector } from './components/FloorSelector';
 import { PresenceList } from './components/PresenceList';
 import { ConsentModal } from './components/ConsentModal';
+import { TouchUI } from './components/TouchUI';
 import { usePresence } from './hooks/usePresence';
 import { useOffline } from './hooks/useOffline';
 
@@ -56,6 +57,7 @@ function BeatStreetApp() {
       <POIPanel />
       <FloorSelector />
       <PresenceList />
+      <TouchUI />
 
       {/* Modals */}
       {showConsentModal && <ConsentModal onConsent={handleConsent} />}
