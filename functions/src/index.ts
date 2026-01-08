@@ -376,6 +376,180 @@ export const seedPOIs = onRequest({
 });
 
 /**
+ * Scavenger hunt items for Chapel Hill venue
+ * TODO: Update with Pittsburgh hunt items when ready
+ */
+const huntItems = [
+  {
+    name: "Welcome Desk",
+    description: "Check in at the conference welcome desk",
+    type: "landmark",
+    points: 5,
+    location: {
+      x: 400,
+      y: 300,
+      floor: 1,
+      zone: "lobby",
+      venueId: "chapel-hill",
+      mapId: "convention-center",
+    },
+    venueId: "chapel-hill",
+    metadata: {
+      photoOpportunity: true,
+      hint: "Look for the main entrance",
+    },
+    isActive: true,
+  },
+  {
+    name: "Conference Fountain",
+    description: "Find the iconic fountain in the plaza",
+    type: "landmark",
+    points: 5,
+    location: {
+      x: 800,
+      y: 600,
+      zone: "plaza",
+      venueId: "chapel-hill",
+      mapId: "outdoor",
+    },
+    venueId: "chapel-hill",
+    metadata: {
+      photoOpportunity: true,
+      hint: "Located in the outdoor plaza area",
+    },
+    isActive: true,
+  },
+  {
+    name: "Vercel Booth",
+    description: "Visit the Vercel sponsor booth",
+    type: "sponsor",
+    points: 10,
+    location: {
+      x: 500,
+      y: 400,
+      floor: 1,
+      zone: "exhibit-hall",
+      venueId: "chapel-hill",
+      mapId: "convention-center",
+    },
+    venueId: "chapel-hill",
+    metadata: {
+      company: "Vercel",
+      hint: "Look for the Next.js creators in the exhibit hall",
+    },
+    isActive: true,
+  },
+  {
+    name: "Opening Keynote",
+    description: "Attend the opening keynote session",
+    type: "session",
+    points: 15,
+    location: {
+      x: 450,
+      y: 250,
+      floor: 2,
+      zone: "main-hall",
+      venueId: "chapel-hill",
+      mapId: "convention-center",
+    },
+    venueId: "chapel-hill",
+    metadata: {
+      room: "Main Hall",
+      hint: "The biggest session of the conference",
+    },
+    isActive: true,
+  },
+];
+
+/**
+ * Seed Hunt Items data to Firestore
+ *
+ * This is an admin-only function to populate the hunt_items collection with
+ * scavenger hunt data.
+ *
+ * Usage:
+ *   curl -X POST https://REGION-PROJECT.cloudfunctions.net/seedHuntItems \
+ *     -H "Content-Type: application/json" \
+ *     -d '{"adminSecret": "YOUR_SECRET", "clearExisting": false}'
+ *
+ * Parameters:
+ *   - adminSecret: Required. Must match ADMIN_SECRET environment variable.
+ *   - clearExisting: Optional. If true, deletes existing items before seeding.
+ */
+export const seedHuntItems = onRequest({
+  cors: true,
+  maxInstances: 10,
+  region: "us-central1",
+}, async (req, res) => {
+  if (req.method !== "POST") {
+    res.status(405).json({
+      success: false,
+      error: "Method not allowed. Use POST.",
+    });
+    return;
+  }
+
+  try {
+    const {adminSecret, clearExisting = false} = req.body;
+
+    // Validate admin secret
+    const expectedSecret = process.env.ADMIN_SECRET || "dev-seed-secret";
+    if (adminSecret !== expectedSecret) {
+      logger.warn("Invalid admin secret provided for seedHuntItems");
+      res.status(403).json({
+        success: false,
+        error: "Invalid admin secret",
+      });
+      return;
+    }
+
+    logger.info("Starting hunt items seeding...");
+
+    // Optionally clear existing hunt items
+    if (clearExisting) {
+      logger.info("Clearing existing hunt items...");
+      const existingItems = await localDb.collection("hunt_items").get();
+      const deleteBatch = localDb.batch();
+      existingItems.docs.forEach((doc) => {
+        deleteBatch.delete(doc.ref);
+      });
+      await deleteBatch.commit();
+      logger.info(`Deleted ${existingItems.size} existing hunt items`);
+    }
+
+    // Seed hunt items
+    const batch = localDb.batch();
+    let count = 0;
+
+    for (const item of huntItems) {
+      const docRef = localDb.collection("hunt_items").doc();
+      batch.set(docRef, {
+        ...item,
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+      count++;
+    }
+
+    await batch.commit();
+    logger.info(`Seeded ${count} hunt items successfully`);
+
+    res.status(200).json({
+      success: true,
+      message: `Successfully seeded ${count} hunt items`,
+      count,
+      items: huntItems.map((i) => ({name: i.name, type: i.type, points: i.points})),
+    });
+  } catch (error: unknown) {
+    logger.error("Hunt items seeding error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Seeding failed. Check function logs.",
+    });
+  }
+});
+
+/**
  * Generate sponsor analytics report
  *
  * This function aggregates analytics data for a specific sponsor
