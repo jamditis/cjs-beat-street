@@ -1,14 +1,3 @@
-/**
- * Analytics Service for Beat Street
- *
- * Provides engagement analytics tracking for sponsor reporting.
- * Features:
- * - Event batching to reduce Firestore writes
- * - Session-based tracking (no PII)
- * - Privacy-respecting design (opt-in only)
- * - Automatic flush on page unload
- */
-
 import {
   collection,
   writeBatch,
@@ -28,33 +17,22 @@ import {
   MapInteractionProperties,
 } from '../types/analytics';
 
-// Constants for batching
 const BATCH_SIZE = 10;
-const FLUSH_INTERVAL_MS = 30000; // 30 seconds
+const FLUSH_INTERVAL_MS = 30000;
 const ANALYTICS_COLLECTION = 'analytics_events';
 const ANALYTICS_PREFERENCES_KEY = 'beat-street-analytics-consent';
 const SESSION_ID_KEY = 'beat-street-session-id';
 
-/**
- * Remove undefined values from an object.
- * Firestore doesn't allow undefined values, so we filter them out.
- */
 function removeUndefined<T extends Record<string, unknown>>(obj: T): Partial<T> {
   return Object.fromEntries(
     Object.entries(obj).filter(([_, v]) => v !== undefined)
   ) as Partial<T>;
 }
 
-/**
- * Generate a unique session ID
- */
 function generateSessionId(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
 }
 
-/**
- * Get or create session ID from session storage
- */
 function getSessionId(): string {
   let sessionId = sessionStorage.getItem(SESSION_ID_KEY);
   if (!sessionId) {
@@ -64,9 +42,6 @@ function getSessionId(): string {
   return sessionId;
 }
 
-/**
- * Analytics state management
- */
 interface AnalyticsState {
   enabled: boolean;
   sessionId: string;
@@ -85,36 +60,21 @@ const state: AnalyticsState = {
   poiViewStartTime: new Map(),
 };
 
-/**
- * Initialize analytics service
- * Call this on app startup to restore preferences and set up session
- */
 export function initAnalytics(): void {
-  // Restore preferences from localStorage
   const prefs = getAnalyticsPreferences();
   state.enabled = prefs.enabled;
   state.sessionId = getSessionId();
 
-  // Set up flush interval
   if (state.enabled) {
     startFlushInterval();
   }
 
-  // Set up page unload handler to flush remaining events
   if (typeof window !== 'undefined') {
     window.addEventListener('beforeunload', handleBeforeUnload);
     window.addEventListener('visibilitychange', handleVisibilityChange);
   }
-
-  console.log('[analytics] Initialized', {
-    enabled: state.enabled,
-    sessionId: state.sessionId.substring(0, 8) + '...',
-  });
 }
 
-/**
- * Clean up analytics service
- */
 export function destroyAnalytics(): void {
   stopFlushInterval();
 
@@ -123,33 +83,21 @@ export function destroyAnalytics(): void {
     window.removeEventListener('visibilitychange', handleVisibilityChange);
   }
 
-  // Flush any remaining events
   flushEvents();
 }
 
-/**
- * Handle page unload - flush events synchronously
- */
 function handleBeforeUnload(): void {
-  // Use sendBeacon for reliable delivery on page unload
   if (state.eventQueue.length > 0 && state.enabled) {
-    // For now, just try to flush - sendBeacon would require a separate endpoint
     flushEvents();
   }
 }
 
-/**
- * Handle visibility change - flush when page becomes hidden
- */
 function handleVisibilityChange(): void {
   if (document.visibilityState === 'hidden' && state.eventQueue.length > 0) {
     flushEvents();
   }
 }
 
-/**
- * Start the periodic flush interval
- */
 function startFlushInterval(): void {
   if (state.flushTimer) return;
 
@@ -160,9 +108,6 @@ function startFlushInterval(): void {
   }, FLUSH_INTERVAL_MS);
 }
 
-/**
- * Stop the flush interval
- */
 function stopFlushInterval(): void {
   if (state.flushTimer) {
     clearInterval(state.flushTimer);
@@ -170,9 +115,6 @@ function stopFlushInterval(): void {
   }
 }
 
-/**
- * Get analytics preferences from localStorage
- */
 export function getAnalyticsPreferences(): AnalyticsPreferences {
   try {
     const stored = localStorage.getItem(ANALYTICS_PREFERENCES_KEY);
@@ -193,9 +135,6 @@ export function getAnalyticsPreferences(): AnalyticsPreferences {
   };
 }
 
-/**
- * Set analytics preferences
- */
 export function setAnalyticsPreferences(enabled: boolean): void {
   const prefs: AnalyticsPreferences = {
     enabled,
@@ -214,24 +153,14 @@ export function setAnalyticsPreferences(enabled: boolean): void {
     startFlushInterval();
   } else {
     stopFlushInterval();
-    // Clear queue when disabled
     state.eventQueue = [];
   }
-
-  console.log('[analytics] Preferences updated', { enabled });
 }
 
-/**
- * Check if analytics is enabled
- */
 export function isAnalyticsEnabled(): boolean {
   return state.enabled;
 }
 
-/**
- * Core event tracking function
- * All other tracking functions should use this
- */
 export function trackEvent(
   eventType: EventType,
   properties: Record<string, unknown> = {}
@@ -249,31 +178,24 @@ export function trackEvent(
 
   state.eventQueue.push(event);
 
-  // Flush if batch is full
   if (state.eventQueue.length >= BATCH_SIZE) {
     flushEvents();
   }
 }
 
-/**
- * Flush events to Firestore
- */
 async function flushEvents(): Promise<void> {
   if (state.eventQueue.length === 0 || !state.enabled) {
     return;
   }
 
-  // Take events from queue
   const events = [...state.eventQueue];
   state.eventQueue = [];
 
   try {
-    // Use batch write for efficiency
     const batch = writeBatch(db);
 
     events.forEach((event) => {
       const docRef = doc(collection(db, ANALYTICS_COLLECTION));
-      // Clean properties to remove undefined values (Firestore doesn't allow undefined)
       const cleanedProperties = removeUndefined(event.properties);
       const docData = removeUndefined({
         eventType: event.eventType,
@@ -288,33 +210,17 @@ async function flushEvents(): Promise<void> {
     });
 
     await batch.commit();
-    console.log(`[analytics] Flushed ${events.length} events`);
   } catch (error) {
     console.error('[analytics] Failed to flush events:', error);
-    // Put events back in queue for retry
     state.eventQueue = [...events, ...state.eventQueue];
   }
 }
 
-// ============================================
-// Convenience tracking functions
-// ============================================
-
-/**
- * Track POI view (when POI panel opens)
- */
 export function trackPOIView(properties: POIEventProperties): void {
   state.poiViewStartTime.set(properties.poiId, Date.now());
-
-  trackEvent('poi_view', {
-    ...properties,
-    startTime: Date.now(),
-  });
+  trackEvent('poi_view', { ...properties, startTime: Date.now() });
 }
 
-/**
- * Track POI close (when POI panel closes) - calculates duration
- */
 export function trackPOIClose(poiId: string, properties: Partial<POIEventProperties>): void {
   const startTime = state.poiViewStartTime.get(poiId);
   const duration = startTime ? Date.now() - startTime : undefined;
@@ -329,23 +235,14 @@ export function trackPOIClose(poiId: string, properties: Partial<POIEventPropert
   });
 }
 
-/**
- * Track POI click
- */
 export function trackPOIClick(properties: POIEventProperties): void {
   trackEvent('poi_click', properties as unknown as Record<string, unknown>);
 }
 
-/**
- * Track session view
- */
 export function trackSessionView(properties: SessionEventProperties): void {
   trackEvent('session_view', properties as unknown as Record<string, unknown>);
 }
 
-/**
- * Track adding session to calendar
- */
 export function trackSessionCalendarAdd(properties: SessionEventProperties): void {
   trackEvent('session_calendar_add', {
     ...(properties as unknown as Record<string, unknown>),
@@ -353,21 +250,11 @@ export function trackSessionCalendarAdd(properties: SessionEventProperties): voi
   });
 }
 
-/**
- * Track zone entry
- */
 export function trackZoneEnter(properties: ZoneEventProperties): void {
   state.zoneEntryTime.set(properties.zone, Date.now());
-
-  trackEvent('zone_enter', {
-    ...properties,
-    entryTime: Date.now(),
-  });
+  trackEvent('zone_enter', { ...properties, entryTime: Date.now() });
 }
 
-/**
- * Track zone exit - calculates duration
- */
 export function trackZoneExit(zone: string, properties: Partial<ZoneEventProperties>): void {
   const entryTime = state.zoneEntryTime.get(zone);
   const duration = entryTime ? Date.now() - entryTime : undefined;
@@ -381,23 +268,14 @@ export function trackZoneExit(zone: string, properties: Partial<ZoneEventPropert
   });
 }
 
-/**
- * Track sponsor booth visit
- */
 export function trackSponsorBoothVisit(properties: SponsorEventProperties): void {
   trackEvent('sponsor_booth_visit', properties as unknown as Record<string, unknown>);
 }
 
-/**
- * Track map interaction
- */
 export function trackMapInteraction(properties: MapInteractionProperties): void {
   trackEvent('map_interaction', properties as unknown as Record<string, unknown>);
 }
 
-/**
- * Track achievement unlock
- */
 export function trackAchievementUnlock(
   achievementId: string,
   achievementName: string,
@@ -410,9 +288,6 @@ export function trackAchievementUnlock(
   });
 }
 
-/**
- * Track attendee profile view
- */
 export function trackAttendeeView(attendeeUid: string, context?: string): void {
   trackEvent('attendee_view', {
     targetUid: attendeeUid,
@@ -420,9 +295,6 @@ export function trackAttendeeView(attendeeUid: string, context?: string): void {
   });
 }
 
-/**
- * Track navigation request
- */
 export function trackNavigationRequest(
   poiId: string,
   poiName: string,
@@ -435,9 +307,6 @@ export function trackNavigationRequest(
   });
 }
 
-/**
- * Track panel open
- */
 export function trackPanelOpen(
   panelType: string,
   properties: Record<string, unknown> = {}
@@ -448,9 +317,6 @@ export function trackPanelOpen(
   });
 }
 
-/**
- * Track panel close
- */
 export function trackPanelClose(
   panelType: string,
   duration?: number,
@@ -463,10 +329,6 @@ export function trackPanelClose(
   });
 }
 
-/**
- * Force flush all pending events
- * Useful for testing or manual flush
- */
 export async function forceFlush(): Promise<void> {
   await flushEvents();
 }

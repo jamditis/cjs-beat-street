@@ -19,17 +19,13 @@ export function GameContainer() {
     mountedRef.current = true;
     instanceCount++;
 
-    // Only create game if no instance exists and container is ready
     if (!gameInstance && containerRef.current) {
       try {
-        // Wait for container to have valid dimensions before initializing
         const container = containerRef.current;
         const rect = container.getBoundingClientRect();
 
-        // If container has no dimensions, wait for layout
         if (rect.width === 0 || rect.height === 0) {
           console.warn('[GameContainer] Container has no dimensions, waiting for layout...');
-          // Use requestAnimationFrame to wait for next paint
           const rafId = requestAnimationFrame(() => {
             if (containerRef.current) {
               try {
@@ -42,7 +38,6 @@ export function GameContainer() {
                   },
                 });
 
-                // Expose for development testing (Playwright)
                 if (import.meta.env.DEV) {
                   (window as unknown as { __phaserGame: Phaser.Game }).__phaserGame = gameInstance;
                 }
@@ -65,7 +60,6 @@ export function GameContainer() {
           },
         });
 
-        // Expose for development testing (Playwright)
         if (import.meta.env.DEV) {
           (window as unknown as { __phaserGame: Phaser.Game }).__phaserGame = gameInstance;
         }

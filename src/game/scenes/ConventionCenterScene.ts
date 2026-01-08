@@ -53,9 +53,6 @@ export class ConventionCenterScene extends Phaser.Scene {
     super({ key: 'ConventionCenterScene' });
   }
 
-  /**
-   * Initialize scene with venue and floor configuration
-   */
   init(data: ConventionCenterSceneData): void {
     this.currentVenueId = data.venueId;
     this.currentIndoorVenueId = data.indoorVenueId;
@@ -124,10 +121,8 @@ export class ConventionCenterScene extends Phaser.Scene {
     // Fade in camera
     this.cameraController.fadeIn(500);
 
-    // Create a separate UI camera that doesn't zoom
-    // This ensures HUD elements stay fixed to the viewport
-    const cameraWidth = this.cameras.main.width || window.innerWidth || 800;
-    const cameraHeight = this.cameras.main.height || window.innerHeight || 600;
+    const cameraWidth = this.cameras.main.width;
+    const cameraHeight = this.cameras.main.height;
     this.uiCamera = this.cameras.add(0, 0, cameraWidth, cameraHeight);
     this.uiCamera.setScroll(0, 0);
 
@@ -204,9 +199,6 @@ export class ConventionCenterScene extends Phaser.Scene {
     this.createWalls();
   }
 
-  /**
-   * Create subtle floor texture variations
-   */
   private createFloorTexture(): void {
     const graphics = this.add.graphics();
     graphics.setDepth(-1);
@@ -223,9 +215,6 @@ export class ConventionCenterScene extends Phaser.Scene {
     }
   }
 
-  /**
-   * Create building walls and structural elements
-   */
   private createWalls(): void {
     const graphics = this.add.graphics();
     graphics.setDepth(0);
@@ -304,9 +293,8 @@ export class ConventionCenterScene extends Phaser.Scene {
   }
 
   private createPOIInfoPanel(): void {
-    // Will be used to show details when hovering over POIs
-    const screenWidth = this.cameras.main.width || window.innerWidth || 800;
-    const screenHeight = this.cameras.main.height || window.innerHeight || 600;
+    const screenWidth = this.cameras.main.width;
+    const screenHeight = this.cameras.main.height;
     const panelWidth = 250;
     const panelHeight = 80;
     const panelX = screenWidth / 2 - panelWidth / 2;
@@ -337,9 +325,9 @@ export class ConventionCenterScene extends Phaser.Scene {
           'E or Space - Interact with nearby POI',
         ];
 
-    const screenHeight = this.cameras.main.height || window.innerHeight || 600;
+    const screenHeight = this.cameras.main.height;
     const instructionsText = this.add
-      .text(20, Math.max(100, screenHeight - 90), instructions.join('\n'), {
+      .text(20, screenHeight - 90, instructions.join('\n'), {
         font: '12px Source Sans 3',
         color: '#2C3E50',
         backgroundColor: '#ffffff',
@@ -386,9 +374,6 @@ export class ConventionCenterScene extends Phaser.Scene {
     }
   }
 
-  /**
-   * Map room type to POI type
-   */
   private getRoomPOIType(roomType?: string): POIType {
     switch (roomType) {
       case 'session':
@@ -431,9 +416,6 @@ export class ConventionCenterScene extends Phaser.Scene {
       .setDepth(1);
   }
 
-  /**
-   * Register a POI with the POIManager
-   */
   private registerPOI(
     id: string,
     x: number,
@@ -513,9 +495,6 @@ export class ConventionCenterScene extends Phaser.Scene {
     }
   }
 
-  /**
-   * Exit the building and return to the outdoor map
-   */
   private exitBuilding(): void {
     eventBus.emit('exited-building', { venueId: this.currentVenueId });
     this.cameraController.fadeOut(500);
@@ -540,32 +519,20 @@ export class ConventionCenterScene extends Phaser.Scene {
     return consent === 'true';
   }
 
-  /**
-   * Setup event handlers for action button and POI navigation
-   */
   private setupEventHandlers(): void {
-    // Handle action button press (mobile) or keyboard interact (desktop)
     this.unsubscribeActionButton = eventBus.on('action-button-pressed', this.handleActionButton.bind(this));
-
-    // Handle navigation to POI request
     this.unsubscribeNavigateToPOI = eventBus.on('navigate-to-poi', this.handleNavigateToPOI.bind(this));
   }
 
-  /**
-   * Handle action button press - interact with nearest POI
-   */
   private handleActionButton(): void {
     const playerPos = this.player.getPosition();
-    const interactionRadius = 150; // Max distance to interact with a POI
-
-    // Find the closest POI within interaction radius
+    const interactionRadius = 150;
     const closestPOI = this.poiManager.getClosestPOI(playerPos.x, playerPos.y);
 
     if (closestPOI) {
       const distance = closestPOI.getDistanceTo(playerPos.x, playerPos.y);
 
       if (distance <= interactionRadius) {
-        // Trigger the POI click event (same as clicking on it)
         eventBus.emit('poi-selected', {
           poiId: closestPOI.data.id,
           type: closestPOI.data.type,
@@ -575,72 +542,32 @@ export class ConventionCenterScene extends Phaser.Scene {
     }
   }
 
-  /**
-   * Handle navigation to a POI - move player towards the POI position
-   */
   private handleNavigateToPOI(data: unknown): void {
     const navData = data as { poiId: string; position: { x: number; y: number } };
 
-    if (navData && navData.position) {
+    if (navData?.position) {
       const { x, y } = navData.position;
-
-      // Move player to POI position
       this.player.setPosition(x, y);
-
-      // Close the POI panel
       eventBus.emit('poi-panel-close', {});
     }
   }
 
   shutdown(): void {
-    // Cleanup EventBus subscriptions
-    if (this.unsubscribeSwitchFloor) {
-      this.unsubscribeSwitchFloor();
-      this.unsubscribeSwitchFloor = null;
-    }
-    if (this.unsubscribeActionButton) {
-      this.unsubscribeActionButton();
-      this.unsubscribeActionButton = null;
-    }
-    if (this.unsubscribeNavigateToPOI) {
-      this.unsubscribeNavigateToPOI();
-      this.unsubscribeNavigateToPOI = null;
-    }
-
-    // Cleanup CameraController
-    if (this.cameraController) {
-      this.cameraController.destroy();
-    }
-
-    if (this.poiManager) {
-      this.poiManager.destroy();
-    }
-
-    if (this.presenceManager) {
-      this.presenceManager.destroy();
-    }
-
-    if (this.player) {
-      this.player.destroy();
-    }
-
-    if (this.inputManager) {
-      this.inputManager.destroy();
-    }
+    this.unsubscribeSwitchFloor?.();
+    this.unsubscribeActionButton?.();
+    this.unsubscribeNavigateToPOI?.();
+    this.cameraController?.destroy();
+    this.poiManager?.destroy();
+    this.presenceManager?.destroy();
+    this.player?.destroy();
+    this.inputManager?.destroy();
   }
 
-  /**
-   * Get player display name from localStorage
-   */
   private getPlayerDisplayName(): string {
-    try {
-      const stored = localStorage.getItem('beat-street-attendee');
-      if (stored) {
-        const data = JSON.parse(stored);
-        return data.displayName || 'You';
-      }
-    } catch (error) {
-      console.warn('[ConventionCenterScene] Failed to get player display name:', error);
+    const stored = localStorage.getItem('beat-street-attendee');
+    if (stored) {
+      const data = JSON.parse(stored);
+      return data.displayName || 'You';
     }
     return 'You';
   }
