@@ -8,25 +8,22 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   preload(): void {
-    // Get camera center with fallbacks for edge cases where camera dimensions are 0
-    const getCenterX = () => this.cameras.main.centerX || (window.innerWidth / 2) || 400;
-    const getCenterY = () => this.cameras.main.centerY || (window.innerHeight / 2) || 300;
+    const centerX = this.cameras.main.centerX;
+    const centerY = this.cameras.main.centerY;
 
-    // Create loading bar
     const progressBar = this.add.graphics();
     const progressBox = this.add.graphics();
     progressBox.fillStyle(0x2a9d8f, 0.2);
     progressBox.fillRect(
-      getCenterX() - 160,
-      getCenterY() - 25,
+      centerX - 160,
+      centerY - 25,
       320,
       50
     );
 
-    // Loading text
     const loadingText = this.make.text({
-      x: getCenterX(),
-      y: getCenterY() - 50,
+      x: centerX,
+      y: centerY - 50,
       text: 'Loading Beat Street...',
       style: {
         font: '20px Source Sans 3',
@@ -35,10 +32,9 @@ export class PreloadScene extends Phaser.Scene {
     });
     loadingText.setOrigin(0.5, 0.5);
 
-    // Progress text
     const percentText = this.make.text({
-      x: getCenterX(),
-      y: getCenterY(),
+      x: centerX,
+      y: centerY,
       text: '0%',
       style: {
         font: '18px Source Sans 3',
@@ -47,14 +43,13 @@ export class PreloadScene extends Phaser.Scene {
     });
     percentText.setOrigin(0.5, 0.5);
 
-    // Update progress bar
     this.load.on('progress', (value: number) => {
       percentText.setText(`${Math.round(value * 100)}%`);
       progressBar.clear();
       progressBar.fillStyle(0x2a9d8f, 1);
       progressBar.fillRect(
-        getCenterX() - 150,
-        getCenterY() - 15,
+        centerX - 150,
+        centerY - 15,
         300 * value,
         30
       );
@@ -67,9 +62,7 @@ export class PreloadScene extends Phaser.Scene {
       percentText.destroy();
     });
 
-    // Load game assets - key sprites from the Penzilla asset pack
-
-    // Buildings - landmark/POI buildings
+    // Buildings
     this.load.image('hotel', '/assets/tilesets/buildings/Hotel_ThreeFloors.png');
     this.load.image('hotel-small', '/assets/tilesets/buildings/Hotel_OneFloor.png');
     this.load.image('cafe', '/assets/tilesets/buildings/Cafe.png');
@@ -90,15 +83,13 @@ export class PreloadScene extends Phaser.Scene {
     this.load.image('apartment-pink', '/assets/tilesets/buildings/Appartment_Pink_1x2_Level2.png');
     this.load.image('postoffice', '/assets/tilesets/buildings/PostOffice.png');
 
-    // Note: Office sprites removed - files don't exist in tileset
-
-    // Terrain tiles
+    // Terrain
     this.load.image('grass', '/assets/tilesets/terrain/Grass.png');
     this.load.image('asphalt', '/assets/tilesets/terrain/Asfalt.png');
     this.load.image('concrete', '/assets/tilesets/terrain/Concreet.png');
     this.load.image('dirt', '/assets/tilesets/terrain/Dirt.png');
 
-    // Vegetation - trees and bushes for scenery
+    // Vegetation
     this.load.image('tree1', '/assets/tilesets/vegetation/Tree1.png');
     this.load.image('tree2', '/assets/tilesets/vegetation/Tree2.png');
     this.load.image('tree3', '/assets/tilesets/vegetation/Tree3.png');
@@ -117,7 +108,7 @@ export class PreloadScene extends Phaser.Scene {
     this.load.image('pond', '/assets/tilesets/infrastructure/Park_Pond.png');
     this.load.image('pool', '/assets/tilesets/infrastructure/Pool.png');
 
-    // Vehicles (for player sprite option)
+    // Vehicles
     this.load.image('car-blue', '/assets/tilesets/vehicles/CarType1_Blue_Front.png');
     this.load.image('bus', '/assets/tilesets/vehicles/Bus_Yellow_Front.png');
 
@@ -134,11 +125,7 @@ export class PreloadScene extends Phaser.Scene {
     this.scene.start('CityMapScene');
   }
 
-  /**
-   * Generate player character sprites with all animations
-   */
   private generatePlayerSprites(): void {
-    // Get player appearance preference from localStorage
     const savedPreset = localStorage.getItem('player-appearance');
     const preset = (savedPreset && savedPreset in PLAYER_PRESETS)
       ? savedPreset as keyof typeof PLAYER_PRESETS
@@ -146,7 +133,6 @@ export class PreloadScene extends Phaser.Scene {
 
     const appearance = PLAYER_PRESETS[preset];
 
-    // Generate the main player sprite sheet
     const generator = new PlayerSpriteGenerator({
       scene: this,
       shirtColor: appearance.shirtColor,
@@ -156,7 +142,5 @@ export class PreloadScene extends Phaser.Scene {
 
     generator.generateSpriteSheet('player');
     generator.generateShadow('player-shadow');
-
-    console.log(`[PreloadScene] Generated player sprites with '${preset}' appearance`);
   }
 }

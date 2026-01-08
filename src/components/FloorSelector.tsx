@@ -55,7 +55,6 @@ export function FloorSelector() {
     }
   }, [buildingInfo, currentFloor, handleFloorChange]);
 
-  // Keyboard navigation within the floor selector
   const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
     if (!buildingInfo) return;
 
@@ -86,8 +85,7 @@ export function FloorSelector() {
     }
   }, [buildingInfo, currentFloor, handleFloorChange]);
 
-  // Defensive check - ensure buildingInfo and floors array exist
-  if (!buildingInfo || !buildingInfo.floors || !Array.isArray(buildingInfo.floors) || buildingInfo.floors.length === 0) {
+  if (!buildingInfo) {
     return null;
   }
 

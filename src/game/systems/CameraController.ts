@@ -36,16 +36,10 @@ export class CameraController {
   private isPinching = false;
   private pinchStartDistance = 0;
   private pinchStartZoom = 1;
-  private readonly pinchDeadZone = 10; // Minimum pixel distance change to trigger zoom
-  private readonly joystickZone = { x: 0, y: 0, width: 200, height: 200 }; // Bottom-left area for joystick
-
-  // Track if destroyed to prevent double cleanup
+  private readonly pinchDeadZone = 10;
+  private readonly joystickZone = { x: 0, y: 0, width: 200, height: 200 };
   private isDestroyed = false;
-
-  // Double-tap zoom settings
   private readonly doubleTapZoomAmount = 0.5;
-
-  // Event bus unsubscribe functions
   private eventUnsubscribers: Array<() => void> = [];
 
   constructor(scene: Phaser.Scene, config: CameraConfig) {
@@ -54,7 +48,6 @@ export class CameraController {
     this.minZoom = config.zoomRange?.min || 0.5;
     this.maxZoom = config.zoomRange?.max || 2;
 
-    // Set world bounds if provided
     if (config.worldBounds) {
       this.camera.setBounds(
         config.worldBounds.x,
@@ -64,16 +57,10 @@ export class CameraController {
       );
     }
 
-    // Setup zoom controls
     this.setupZoomControls();
-
-    // Setup pinch-to-zoom for mobile
     this.setupPinchZoom();
-
-    // Setup double-tap zoom from React UI
     this.setupDoubleTapZoom();
 
-    // Setup deadzone for smoother following
     if (config.deadzone) {
       this.camera.setDeadzone(config.deadzone.width, config.deadzone.height);
     }
@@ -82,8 +69,6 @@ export class CameraController {
   private setupDoubleTapZoom(): void {
     const unsubscribe = eventBus.on('double-tap-zoom', (data: unknown) => {
       const { x, y, direction } = data as { x: number; y: number; direction: 'in' | 'out' };
-
-      // Convert screen coordinates to world coordinates for zoom center
       const worldPoint = this.camera.getWorldPoint(x, y);
 
       if (direction === 'in') {
@@ -96,13 +81,9 @@ export class CameraController {
     this.eventUnsubscribers.push(unsubscribe);
   }
 
-  /**
-   * Zoom to a specific point, keeping that point centered
-   */
   zoomToPoint(worldX: number, worldY: number, targetZoom: number): void {
     const newZoom = Phaser.Math.Clamp(targetZoom, this.minZoom, this.maxZoom);
 
-    // Smoothly pan to the point while zooming
     this.scene.tweens.add({
       targets: this,
       currentZoom: newZoom,
@@ -113,7 +94,6 @@ export class CameraController {
       },
     });
 
-    // Pan camera to center on the tap point
     this.camera.pan(worldX, worldY, 200, 'Sine.easeOut');
   }
 
@@ -154,26 +134,18 @@ export class CameraController {
   }
 
   private setupPinchZoom(): void {
-    // Update joystick zone based on screen size (bottom-left quadrant)
     this.updateJoystickZone();
 
-    // Listen for pointer events
     this.scene.input.on('pointerdown', this.onPointerDown, this);
     this.scene.input.on('pointermove', this.onPointerMove, this);
     this.scene.input.on('pointerup', this.onPointerUp, this);
     this.scene.input.on('pointercancel', this.onPointerUp, this);
 
-    // Handle screen resize
     this.scene.scale.on('resize', this.updateJoystickZone, this);
   }
 
   private updateJoystickZone(): void {
-    // Joystick is typically in the bottom-left corner
-    // Define a zone where single-touch is reserved for the joystick
     const gameHeight = this.scene.scale.height || window.innerHeight || 600;
-
-    // Safety check: ensure valid dimensions
-    if (gameHeight <= 0) return;
 
     this.joystickZone.x = 0;
     this.joystickZone.y = Math.max(0, gameHeight - 200);
@@ -194,7 +166,6 @@ export class CameraController {
     const pointers: Phaser.Input.Pointer[] = [];
     const input = this.scene.input;
 
-    // Check all available pointers
     if (input.pointer1?.isDown) pointers.push(input.pointer1);
     if (input.pointer2?.isDown) pointers.push(input.pointer2);
     if (input.pointer3?.isDown) pointers.push(input.pointer3);
@@ -212,10 +183,7 @@ export class CameraController {
   private onPointerDown = (): void => {
     const pointers = this.getActivePointers();
 
-    // Need exactly two pointers for pinch-to-zoom
     if (pointers.length === 2) {
-      // Check if either pointer is in the joystick zone - if so, don't start pinch
-      // This prevents conflicts when user is moving and accidentally touches elsewhere
       const pointer1InJoystick = this.isInJoystickZone(pointers[0].x, pointers[0].y);
       const pointer2InJoystick = this.isInJoystickZone(pointers[1].x, pointers[1].y);
 
@@ -234,7 +202,6 @@ export class CameraController {
 
     const pointers = this.getActivePointers();
 
-    // Need two pointers to continue pinch
     if (pointers.length !== 2) {
       this.isPinching = false;
       return;
@@ -243,14 +210,10 @@ export class CameraController {
     const currentDistance = this.getDistanceBetweenPointers(pointers[0], pointers[1]);
     const distanceDelta = currentDistance - this.pinchStartDistance;
 
-    // Apply dead zone to prevent accidental small zooms
     if (Math.abs(distanceDelta) < this.pinchDeadZone) {
       return;
     }
 
-    // Calculate zoom based on pinch distance ratio
-    // Spreading fingers apart (increasing distance) = zoom in
-    // Pinching fingers together (decreasing distance) = zoom out
     const zoomRatio = currentDistance / this.pinchStartDistance;
     const newZoom = this.pinchStartZoom * zoomRatio;
 
@@ -260,7 +223,6 @@ export class CameraController {
   private onPointerUp = (): void => {
     const pointers = this.getActivePointers();
 
-    // If we have fewer than 2 pointers, end the pinch
     if (pointers.length < 2) {
       this.isPinching = false;
     }
@@ -325,15 +287,12 @@ export class CameraController {
   }
 
   update(): void {
-    // Any per-frame camera updates can go here
-    // Currently handled by Phaser's built-in camera follow
   }
 
   destroy(): void {
     if (this.isDestroyed) return;
     this.isDestroyed = true;
 
-    // Remove keyboard key listeners
     if (this.zoomInKey) {
       this.zoomInKey.off('down');
       this.zoomInKey = null;
@@ -351,19 +310,13 @@ export class CameraController {
       this.zoomOutKeyMain = null;
     }
 
-    // Remove pointer event listeners
     this.scene.input.off('pointerdown', this.onPointerDown, this);
     this.scene.input.off('pointermove', this.onPointerMove, this);
     this.scene.input.off('pointerup', this.onPointerUp, this);
     this.scene.input.off('pointercancel', this.onPointerUp, this);
-
-    // Remove wheel listener
     this.scene.input.off('wheel');
-
-    // Remove scale resize listener
     this.scene.scale.off('resize', this.updateJoystickZone, this);
 
-    // Unsubscribe from event bus
     this.eventUnsubscribers.forEach((unsub) => unsub());
     this.eventUnsubscribers = [];
   }

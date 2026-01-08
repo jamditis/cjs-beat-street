@@ -19,8 +19,6 @@ import { eventBus } from './lib/EventBus';
 import { VenueId } from './types/venue';
 import { initializeReminders } from './services/notifications';
 
-// Lazy-loaded components for code splitting
-// GameContainer loads Phaser (~1.1MB) - defer until after auth
 const GameContainer = lazy(() => import('./components/GameContainer').then(m => ({ default: m.GameContainer })));
 const VenueSelector = lazy(() => import('./components/VenueSelector').then(m => ({ default: m.VenueSelector })));
 const SettingsPanel = lazy(() => import('./components/SettingsPanel').then(m => ({ default: m.SettingsPanel })));
@@ -33,7 +31,6 @@ const AchievementPanel = lazy(() => import('./components/AchievementPanel').then
 const AchievementToast = lazy(() => import('./components/AchievementToast').then(m => ({ default: m.AchievementToast })));
 const NotificationPanel = lazy(() => import('./components/NotificationPanel').then(m => ({ default: m.NotificationPanel })));
 
-// Loading fallback for lazy components
 function LoadingSpinner() {
   return (
     <div className="flex items-center justify-center p-4" role="status" aria-label="Loading">
@@ -60,7 +57,6 @@ interface VerifiedAttendee {
 }
 
 function BeatStreetApp() {
-  // Initialize analytics on app startup
   useAnalyticsInit();
 
   const [showConsentModal, setShowConsentModal] = useState(
@@ -81,13 +77,11 @@ function BeatStreetApp() {
   const [isMobile, setIsMobile] = useState(false);
   const { isOnline } = useOffline();
 
-  // Venue selection state
   const [selectedVenue, setSelectedVenue] = useState<VenueId | null>(() => {
     const cached = localStorage.getItem('beat-street-venue');
     return cached ? (cached as VenueId) : null;
   });
 
-  // Detect mobile device
   useEffect(() => {
     const checkMobile = () => {
       const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
@@ -102,7 +96,6 @@ function BeatStreetApp() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Listen for menu button event from TouchUI
   useEffect(() => {
     const unsubscribeMenu = eventBus.on('menu-button-pressed', () => {
       setShowSettingsPanel(true);
@@ -116,7 +109,6 @@ function BeatStreetApp() {
     };
   }, []);
 
-  // Listen for achievements panel open event
   useEffect(() => {
     const unsubscribe = eventBus.on('open-achievements-panel', () => {
       setShowAchievementsPanel(true);
@@ -124,18 +116,15 @@ function BeatStreetApp() {
     return unsubscribe;
   }, []);
 
-  // Initialize notification reminders on app load
   useEffect(() => {
     initializeReminders();
   }, []);
 
-  // Check for cached verification
   useEffect(() => {
     const cached = localStorage.getItem('beat-street-attendee');
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
-        // Check if cache is still valid (24 hours)
         if (parsed.expiresAt && new Date(parsed.expiresAt) > new Date()) {
           setAttendee(parsed);
         } else {
@@ -147,7 +136,6 @@ function BeatStreetApp() {
     }
   }, []);
 
-  // Listen for Firebase auth state
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -157,7 +145,6 @@ function BeatStreetApp() {
     return () => unsubscribe();
   }, []);
 
-  // Verify attendee against CJS2026
   const verifyAttendee = useCallback(async (user: User) => {
     setVerifying(true);
     setError(null);
@@ -186,7 +173,6 @@ function BeatStreetApp() {
           photoURL: data.attendee.photoURL,
         };
 
-        // Cache for 24 hours
         localStorage.setItem('beat-street-attendee', JSON.stringify({
           ...verifiedAttendee,
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
@@ -204,7 +190,6 @@ function BeatStreetApp() {
     }
   }, []);
 
-  // Sign in with Google (CJS2026 uses Google auth)
   const handleSignIn = async () => {
     setError(null);
     try {
@@ -218,7 +203,6 @@ function BeatStreetApp() {
     }
   };
 
-  // Sign out
   const handleSignOut = async () => {
     const auth = getAuth();
     await auth.signOut();
@@ -226,7 +210,6 @@ function BeatStreetApp() {
     localStorage.removeItem('beat-street-attendee');
   };
 
-  // Memoize presence options to prevent infinite re-renders
   const presenceOptions = useMemo(
     () =>
       attendee
@@ -239,7 +222,6 @@ function BeatStreetApp() {
     [attendee?.uid, attendee?.displayName, shareLocation]
   );
 
-  // Initialize presence system for verified attendees
   usePresence(presenceOptions);
 
   const handleConsent = (consent: boolean) => {
@@ -253,29 +235,24 @@ function BeatStreetApp() {
     localStorage.setItem('location-consent', share ? 'true' : 'false');
   };
 
-  // Venue selection handler (initial selection)
   const handleVenueSelect = (venueId: VenueId) => {
     setSelectedVenue(venueId);
     localStorage.setItem('beat-street-venue', venueId);
-    // Emit event to Phaser to load venue
     eventBus.emit('venue-selected', { venueId });
   };
 
-  // Venue change handler (from settings panel)
   const handleVenueChange = (venueId: VenueId) => {
     setSelectedVenue(venueId);
     localStorage.setItem('beat-street-venue', venueId);
     eventBus.emit('venue-changed', { venueId });
   };
 
-  // Emit venue-selected on initial load when venue is already selected
   useEffect(() => {
     if (selectedVenue && attendee && !showConsentModal) {
       eventBus.emit('venue-selected', { venueId: selectedVenue });
     }
   }, [selectedVenue, attendee, showConsentModal]);
 
-  // Loading state
   if (authLoading) {
     return (
       <div className="h-full w-full flex items-center justify-center bg-cream" role="status" aria-label="Loading application">
@@ -287,23 +264,19 @@ function BeatStreetApp() {
     );
   }
 
-  // Not verified - show sign in screen
   if (!attendee) {
     return (
       <div className="h-full w-full flex items-center justify-center bg-cream">
         <main id="main-content" className="max-w-md w-full mx-4 bg-paper rounded-2xl shadow-xl p-8 text-center" role="main">
-          {/* Logo */}
           <div className="mb-6">
             <h1 className="font-display text-4xl text-ink mb-2">Beat Street</h1>
             <p className="text-ink/70 font-body">CJS2026 Navigator</p>
           </div>
 
-          {/* Description */}
           <p className="text-ink/80 mb-8 font-body">
             Explore the conference venue, find sessions, and connect with other attendees.
           </p>
 
-          {/* Error message */}
           {error && (
             <div
               className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 text-sm"
@@ -314,7 +287,6 @@ function BeatStreetApp() {
             </div>
           )}
 
-          {/* Sign in button */}
           <button
             onClick={handleSignIn}
             disabled={verifying}
@@ -339,12 +311,10 @@ function BeatStreetApp() {
             )}
           </button>
 
-          {/* Help text */}
           <p id="sign-in-help" className="mt-6 text-sm text-ink/60">
             Use the same Google account you registered with for CJS2026.
           </p>
 
-          {/* Registration link */}
           <p className="mt-4 text-sm text-ink/60">
             Not registered?{' '}
             <a
@@ -361,7 +331,6 @@ function BeatStreetApp() {
     );
   }
 
-  // Show venue selector if no venue selected (after consent is handled)
   if (!selectedVenue && !showConsentModal) {
     return (
       <div className="h-full w-full bg-cream">
@@ -375,10 +344,8 @@ function BeatStreetApp() {
     );
   }
 
-  // Verified attendee - show the app
   return (
     <div className="h-full w-full relative bg-cream">
-      {/* Skip links for keyboard navigation */}
       <SkipLinks
         links={[
           { targetId: 'main-content', label: 'Skip to main content' },
@@ -386,12 +353,10 @@ function BeatStreetApp() {
         ]}
       />
 
-      {/* Screen reader announcements for offline status */}
       <Announcer politeness="polite">
         {!isOnline ? 'You are currently offline. Some features may be limited.' : ''}
       </Announcer>
 
-      {/* Offline indicator */}
       {!isOnline && (
         <div
           className="absolute top-0 left-0 right-0 bg-yellow-500 text-white text-center py-1 z-50 text-sm"
@@ -402,7 +367,6 @@ function BeatStreetApp() {
         </div>
       )}
 
-      {/* Desktop navigation buttons (hidden on mobile, TouchUI handles it there) */}
       {!isMobile && (
         <nav id="navigation" className="absolute top-4 right-4 z-40 flex gap-2" aria-label="Main navigation">
           <NotificationBell onViewAll={() => setShowNotificationsPanel(true)} />
@@ -438,14 +402,12 @@ function BeatStreetApp() {
         </nav>
       )}
 
-      {/* Main game view */}
       <main id="main-content" className="h-full w-full" role="main" aria-label="Interactive conference map">
         <Suspense fallback={<LoadingSpinner />}>
           <GameContainer />
         </Suspense>
       </main>
 
-      {/* UI Overlays */}
       <Suspense fallback={null}>
         <POIPanel />
       </Suspense>
@@ -460,7 +422,6 @@ function BeatStreetApp() {
         <AttendeeCard />
       </Suspense>
 
-      {/* Modals */}
       {showConsentModal && <ConsentModal onConsent={handleConsent} />}
       <Suspense fallback={null}>
         <AttendeeProfileModal />
@@ -478,7 +439,6 @@ function BeatStreetApp() {
         />
       </Suspense>
 
-      {/* Leaderboard Panel */}
       <Suspense fallback={null}>
         <LeaderboardPanel
           isOpen={showLeaderboardPanel}
@@ -489,7 +449,6 @@ function BeatStreetApp() {
         />
       </Suspense>
 
-      {/* Achievement Panel */}
       <Suspense fallback={null}>
         <AchievementPanel
           isOpen={showAchievementsPanel}
@@ -499,12 +458,10 @@ function BeatStreetApp() {
         />
       </Suspense>
 
-      {/* Achievement Toast Notifications */}
       <Suspense fallback={null}>
         <AchievementToast position="top-right" duration={6000} />
       </Suspense>
 
-      {/* Notification Panel */}
       <Suspense fallback={null}>
         <NotificationPanel
           isOpen={showNotificationsPanel}
@@ -512,7 +469,6 @@ function BeatStreetApp() {
         />
       </Suspense>
 
-      {/* Notification Toast (session reminders, announcements) */}
       <NotificationToast />
     </div>
   );
