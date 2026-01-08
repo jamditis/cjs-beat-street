@@ -80,10 +80,29 @@ export class PlayerSpriteGenerator {
         const frameY = Math.floor(i / framesPerDirection) * this.charHeight;
         texture.add(i, 0, frameX, frameY, this.charWidth, this.charHeight);
       }
+      console.log(`[PlayerSpriteGenerator] Created texture '${textureKey}' with ${totalFrames} frames`);
+    } else {
+      console.error(`[PlayerSpriteGenerator] Failed to create texture '${textureKey}'`);
+      // Create a fallback colored rectangle texture
+      this.createFallbackTexture(textureKey);
     }
 
     // Create animation configurations
     this.createAnimations(textureKey, directions, framesPerDirection);
+  }
+
+  /**
+   * Create a simple fallback texture if sprite generation fails
+   */
+  private createFallbackTexture(textureKey: string): void {
+    const graphics = this.scene.add.graphics();
+    graphics.fillStyle(this.shirtColor, 1);
+    graphics.fillRect(0, 0, this.charWidth, this.charHeight);
+    graphics.fillStyle(this.skinTone, 1);
+    graphics.fillCircle(this.charWidth / 2, 12, 8);
+    graphics.generateTexture(textureKey, this.charWidth, this.charHeight);
+    graphics.destroy();
+    console.warn(`[PlayerSpriteGenerator] Using fallback texture for '${textureKey}'`);
   }
 
   /**

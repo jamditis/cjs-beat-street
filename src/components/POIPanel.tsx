@@ -279,52 +279,65 @@ export function POIPanel() {
     }
   };
 
-  const renderSessionDetails = (poi: SessionPOI) => (
-    <div className="space-y-3">
-      {poi.metadata.startTime && poi.metadata.endTime && (
-        <div className="flex items-start gap-2 text-ink/80">
-          <Clock className="w-4 h-4 mt-0.5 flex-shrink-0" />
-          <div className="text-sm">
-            <div className="font-semibold">
-              {poi.metadata.startTime} - {poi.metadata.endTime}
+  const renderSessionDetails = (poi: SessionPOI) => {
+    // Defensive check - metadata may be undefined for some POI types
+    if (!poi.metadata) {
+      return null;
+    }
+
+    return (
+      <div className="space-y-3">
+        {poi.metadata.startTime && poi.metadata.endTime && (
+          <div className="flex items-start gap-2 text-ink/80">
+            <Clock className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <div className="text-sm">
+              <div className="font-semibold">
+                {poi.metadata.startTime} - {poi.metadata.endTime}
+              </div>
             </div>
           </div>
-        </div>
-      )}
-      {poi.metadata.speaker && (
-        <div className="flex items-start gap-2 text-ink/80">
-          <User className="w-4 h-4 mt-0.5 flex-shrink-0" />
-          <div className="text-sm">
-            <span className="font-semibold">Speaker: </span>
-            {poi.metadata.speaker}
+        )}
+        {poi.metadata.speaker && (
+          <div className="flex items-start gap-2 text-ink/80">
+            <User className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <div className="text-sm">
+              <span className="font-semibold">Speaker: </span>
+              {poi.metadata.speaker}
+            </div>
           </div>
-        </div>
-      )}
-      {poi.metadata.room && (
-        <div className="flex items-start gap-2 text-ink/80">
-          <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-          <div className="text-sm">
-            <span className="font-semibold">Room: </span>
-            {poi.metadata.room}
+        )}
+        {poi.metadata.room && (
+          <div className="flex items-start gap-2 text-ink/80">
+            <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <div className="text-sm">
+              <span className="font-semibold">Room: </span>
+              {poi.metadata.room}
+            </div>
           </div>
-        </div>
-      )}
-      {poi.metadata.track && (
-        <div className="inline-block px-3 py-1 bg-teal-600/10 text-teal-600 rounded-full text-xs font-semibold">
-          {poi.metadata.track}
-        </div>
-      )}
-      {poi.metadata.capacity && (
-        <div className="text-xs text-ink/60">
-          Capacity: {poi.metadata.attendeeCount || 0}/{poi.metadata.capacity}
-        </div>
-      )}
-    </div>
-  );
+        )}
+        {poi.metadata.track && (
+          <div className="inline-block px-3 py-1 bg-teal-600/10 text-teal-600 rounded-full text-xs font-semibold">
+            {poi.metadata.track}
+          </div>
+        )}
+        {poi.metadata.capacity && (
+          <div className="text-xs text-ink/60">
+            Capacity: {poi.metadata.attendeeCount || 0}/{poi.metadata.capacity}
+          </div>
+        )}
+      </div>
+    );
+  };
 
-  const renderSponsorDetails = (poi: SponsorPOI) => (
-    <div className="space-y-3">
-      {poi.metadata.company && (
+  const renderSponsorDetails = (poi: SponsorPOI) => {
+    // Defensive check - metadata may be undefined for some POI types
+    if (!poi.metadata) {
+      return null;
+    }
+
+    return (
+      <div className="space-y-3">
+        {poi.metadata.company && (
         <div className="text-sm font-semibold text-ink/90">
           {poi.metadata.company}
         </div>
@@ -364,10 +377,17 @@ export function POIPanel() {
           Visit Website
         </a>
       )}
-    </div>
-  );
+      </div>
+    );
+  };
 
-  const renderFoodDetails = (poi: FoodPOI) => (
+  const renderFoodDetails = (poi: FoodPOI) => {
+    // Defensive check - metadata may be undefined for some POI types
+    if (!poi.metadata) {
+      return null;
+    }
+
+    return (
     <div className="space-y-3">
       {poi.metadata.menuType && (
         <div className="text-sm text-ink/80">
@@ -405,7 +425,8 @@ export function POIPanel() {
         </div>
       )}
     </div>
-  );
+    );
+  };
 
   const renderTypeSpecificContent = () => {
     if (!selectedPOI) return null;
