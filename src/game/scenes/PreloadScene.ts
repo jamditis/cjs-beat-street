@@ -8,21 +8,25 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   preload(): void {
+    // Get camera center with fallbacks for edge cases where camera dimensions are 0
+    const getCenterX = () => this.cameras.main.centerX || (window.innerWidth / 2) || 400;
+    const getCenterY = () => this.cameras.main.centerY || (window.innerHeight / 2) || 300;
+
     // Create loading bar
     const progressBar = this.add.graphics();
     const progressBox = this.add.graphics();
     progressBox.fillStyle(0x2a9d8f, 0.2);
     progressBox.fillRect(
-      this.cameras.main.centerX - 160,
-      this.cameras.main.centerY - 25,
+      getCenterX() - 160,
+      getCenterY() - 25,
       320,
       50
     );
 
     // Loading text
     const loadingText = this.make.text({
-      x: this.cameras.main.centerX,
-      y: this.cameras.main.centerY - 50,
+      x: getCenterX(),
+      y: getCenterY() - 50,
       text: 'Loading Beat Street...',
       style: {
         font: '20px Source Sans 3',
@@ -33,8 +37,8 @@ export class PreloadScene extends Phaser.Scene {
 
     // Progress text
     const percentText = this.make.text({
-      x: this.cameras.main.centerX,
-      y: this.cameras.main.centerY,
+      x: getCenterX(),
+      y: getCenterY(),
       text: '0%',
       style: {
         font: '18px Source Sans 3',
@@ -49,8 +53,8 @@ export class PreloadScene extends Phaser.Scene {
       progressBar.clear();
       progressBar.fillStyle(0x2a9d8f, 1);
       progressBar.fillRect(
-        this.cameras.main.centerX - 150,
-        this.cameras.main.centerY - 15,
+        getCenterX() - 150,
+        getCenterY() - 15,
         300 * value,
         30
       );
@@ -67,9 +71,11 @@ export class PreloadScene extends Phaser.Scene {
 
     // Buildings - landmark/POI buildings
     this.load.image('hotel', '/assets/tilesets/buildings/Hotel_ThreeFloors.png');
+    this.load.image('hotel-small', '/assets/tilesets/buildings/Hotel_OneFloor.png');
     this.load.image('cafe', '/assets/tilesets/buildings/Cafe.png');
     this.load.image('museum', '/assets/tilesets/buildings/Leasure_Museum.png');
     this.load.image('theater', '/assets/tilesets/buildings/Leasure_Theater.png');
+    this.load.image('cinema', '/assets/tilesets/buildings/Leasure_Cinema.png');
     this.load.image('library', '/assets/tilesets/buildings/Public_Library.png');
     this.load.image('townhall', '/assets/tilesets/buildings/Public_Townhall.png');
     this.load.image('school', '/assets/tilesets/buildings/Education_School.png');
@@ -80,7 +86,13 @@ export class PreloadScene extends Phaser.Scene {
     this.load.image('mall', '/assets/tilesets/buildings/Groceries_Mall.png');
     this.load.image('store', '/assets/tilesets/buildings/Groceries_Store.png');
     this.load.image('apartment', '/assets/tilesets/buildings/Appartment_Blue_2x2_Level3.png');
+    this.load.image('apartment-green', '/assets/tilesets/buildings/Appartment_Green_2x2_Level2.png');
+    this.load.image('apartment-pink', '/assets/tilesets/buildings/Appartment_Pink_1x2_Level2.png');
     this.load.image('postoffice', '/assets/tilesets/buildings/PostOffice.png');
+
+    // Additional buildings for variety
+    this.load.image('office', '/assets/tilesets/buildings/Office_1x1_Level3.png');
+    this.load.image('office-large', '/assets/tilesets/buildings/Office_2x2_Level3.png');
 
     // Terrain tiles
     this.load.image('grass', '/assets/tilesets/terrain/Grass.png');
@@ -88,10 +100,19 @@ export class PreloadScene extends Phaser.Scene {
     this.load.image('concrete', '/assets/tilesets/terrain/Concreet.png');
     this.load.image('dirt', '/assets/tilesets/terrain/Dirt.png');
 
-    // Vegetation
+    // Vegetation - trees and bushes for scenery
     this.load.image('tree1', '/assets/tilesets/vegetation/Tree1.png');
     this.load.image('tree2', '/assets/tilesets/vegetation/Tree2.png');
+    this.load.image('tree3', '/assets/tilesets/vegetation/Tree3.png');
+    this.load.image('tree4', '/assets/tilesets/vegetation/Tree4.png');
+    this.load.image('pine1', '/assets/tilesets/vegetation/Pine1.png');
+    this.load.image('pine2', '/assets/tilesets/vegetation/Pine2.png');
     this.load.image('bush1', '/assets/tilesets/vegetation/Bushes1.png');
+    this.load.image('bush2', '/assets/tilesets/vegetation/Bushes2.png');
+    this.load.image('bush3', '/assets/tilesets/vegetation/Bushes3.png');
+    this.load.image('hedge', '/assets/tilesets/vegetation/Hedge1.png');
+    this.load.image('plant1', '/assets/tilesets/vegetation/Plant1.png');
+    this.load.image('plant2', '/assets/tilesets/vegetation/Plant2.png');
 
     // Infrastructure
     this.load.image('fountain', '/assets/tilesets/infrastructure/Park_Fountain.png');

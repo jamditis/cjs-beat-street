@@ -75,8 +75,11 @@ export class TouchControls {
 
   private onPointerDown(pointer: Phaser.Input.Pointer): void {
     // Only activate if touch is in the bottom-left quadrant
-    const width = this.scene.scale.width;
-    const height = this.scene.scale.height;
+    const width = this.scene.scale.width || window.innerWidth || 800;
+    const height = this.scene.scale.height || window.innerHeight || 600;
+
+    // Safety check: don't activate if dimensions are invalid
+    if (width <= 0 || height <= 0) return;
 
     if (pointer.x < width / 2 && pointer.y > height / 2) {
       // Prevent multiple joysticks

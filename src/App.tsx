@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, User } from 'firebase/auth';
-import { Settings, Trophy } from 'lucide-react';
+import { Settings, BarChart3, Award } from 'lucide-react';
 import { FloorSelector } from './components/FloorSelector';
 import { PresenceList } from './components/PresenceList';
 import { ConsentModal } from './components/ConsentModal';
@@ -408,25 +408,30 @@ function BeatStreetApp() {
           <NotificationBell onViewAll={() => setShowNotificationsPanel(true)} />
           <button
             onClick={() => setShowLeaderboardPanel(true)}
-            className="w-10 h-10 bg-paper/90 backdrop-blur-sm rounded-full shadow-md flex items-center justify-center hover:bg-paper transition-colors focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2"
+            className="group relative h-10 px-3 bg-paper/90 backdrop-blur-sm rounded-full shadow-md flex items-center justify-center gap-2 hover:bg-paper transition-colors focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2"
             aria-label="Open leaderboard"
             aria-haspopup="dialog"
+            title="Leaderboard"
           >
-            <Trophy className="w-5 h-5 text-teal-600" aria-hidden="true" />
+            <BarChart3 className="w-5 h-5 text-teal-600" aria-hidden="true" />
+            <span className="text-sm font-medium text-ink hidden lg:inline">Leaderboard</span>
           </button>
           <button
             onClick={() => setShowAchievementsPanel(true)}
-            className="w-10 h-10 bg-paper/90 backdrop-blur-sm rounded-full shadow-md flex items-center justify-center hover:bg-paper transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+            className="group relative h-10 px-3 bg-paper/90 backdrop-blur-sm rounded-full shadow-md flex items-center justify-center gap-2 hover:bg-paper transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
             aria-label="Open achievements"
             aria-haspopup="dialog"
+            title="Achievements"
           >
-            <Trophy className="w-5 h-5 text-amber-600" aria-hidden="true" />
+            <Award className="w-5 h-5 text-amber-600" aria-hidden="true" />
+            <span className="text-sm font-medium text-ink hidden lg:inline">Achievements</span>
           </button>
           <button
             onClick={() => setShowSettingsPanel(true)}
             className="w-10 h-10 bg-paper/90 backdrop-blur-sm rounded-full shadow-md flex items-center justify-center hover:bg-paper transition-colors focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2"
             aria-label="Open settings"
             aria-haspopup="dialog"
+            title="Settings"
           >
             <Settings className="w-5 h-5 text-ink" aria-hidden="true" />
           </button>

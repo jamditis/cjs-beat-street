@@ -36,7 +36,9 @@ export class CityMapScene extends Phaser.Scene {
   private lastPositionUpdate = 0;
   private positionUpdateInterval = 100; // Update every 100ms instead of every frame
 
-  // UI Elements
+  // UI Elements (fixed to viewport, not affected by camera zoom)
+  private uiCamera!: Phaser.Cameras.Scene2D.Camera;
+  private uiElements: Phaser.GameObjects.GameObject[] = [];
   private minimapIndicator!: Phaser.GameObjects.Rectangle;
   private zoomText!: Phaser.GameObjects.Text;
 
@@ -121,6 +123,13 @@ export class CityMapScene extends Phaser.Scene {
     // Make camera follow player with smooth lerp
     this.cameraController.followTarget(this.player.sprite, 0.1);
 
+    // Create a separate UI camera that doesn't zoom
+    // This ensures HUD elements stay fixed to the viewport
+    this.uiCamera = this.cameras.add(0, 0, this.cameras.main.width, this.cameras.main.height);
+    this.uiCamera.setScroll(0, 0);
+    // UI camera ignores world objects (they're rendered by main camera)
+    this.uiCamera.ignore([]);
+
     // Initialize POIManager for outdoor landmarks
     this.poiManager = new POIManager({
       scene: this,
@@ -128,7 +137,7 @@ export class CityMapScene extends Phaser.Scene {
       showDistances: false,
     });
 
-    // Create UI elements (fixed to camera)
+    // Create UI elements (fixed to viewport via UI camera)
     this.createUI();
 
     // Add buildings (Convention Center has custom interaction)
@@ -155,26 +164,104 @@ export class CityMapScene extends Phaser.Scene {
   }
 
   private createMapBackground(): void {
-    // Main background
+    // Main background - lighter cream/grass color
     this.add.rectangle(
       this.worldWidth / 2,
       this.worldHeight / 2,
       this.worldWidth,
       this.worldHeight,
-      0xf0ebe0
+      0xe8e4d4
     );
 
-    // Create a grid pattern for visual reference
-    const graphics = this.add.graphics();
-    graphics.lineStyle(1, 0xe0d5c0, 0.5);
+    // Add subtle terrain variation with grass tiles if available
+    this.createTerrainLayer();
 
-    const gridSize = 100;
+    // Create very subtle grid pattern (mostly invisible, just hints)
+    const graphics = this.add.graphics();
+    graphics.lineStyle(1, 0xd8d0c0, 0.15); // Much more subtle
+
+    const gridSize = 200; // Larger grid
     for (let x = 0; x <= this.worldWidth; x += gridSize) {
       graphics.lineBetween(x, 0, x, this.worldHeight);
     }
     for (let y = 0; y <= this.worldHeight; y += gridSize) {
       graphics.lineBetween(0, y, this.worldWidth, y);
     }
+  }
+
+  /**
+   * Create terrain layer with grass and path variations
+   */
+  private createTerrainLayer(): void {
+    // Add scattered grass tiles for texture
+    const grassPositions = this.generateScatteredPositions(40, 100);
+    grassPositions.forEach(({ x, y }) => {
+      if (this.textures.exists('grass')) {
+        const grass = this.add.image(x, y, 'grass');
+        grass.setScale(0.4);
+        grass.setAlpha(0.3);
+        grass.setDepth(-10);
+      }
+    });
+
+    // Add path/road areas connecting districts
+    this.createPathways();
+  }
+
+  /**
+   * Generate scattered random positions avoiding building zones
+   */
+  private generateScatteredPositions(count: number, margin: number): Array<{ x: number; y: number }> {
+    const positions: Array<{ x: number; y: number }> = [];
+    const indoorVenues = this.venueConfig.outdoorMap.indoorVenues;
+
+    for (let i = 0; i < count; i++) {
+      let x: number, y: number;
+      let attempts = 0;
+      do {
+        x = margin + Math.random() * (this.worldWidth - margin * 2);
+        y = margin + Math.random() * (this.worldHeight - margin * 2);
+        attempts++;
+      } while (this.isNearBuilding(x, y, indoorVenues, 150) && attempts < 20);
+
+      if (attempts < 20) {
+        positions.push({ x, y });
+      }
+    }
+    return positions;
+  }
+
+  /**
+   * Check if position is near a building
+   */
+  private isNearBuilding(
+    x: number,
+    y: number,
+    indoorVenues: typeof this.venueConfig.outdoorMap.indoorVenues,
+    minDistance: number
+  ): boolean {
+    return indoorVenues.some((venue) => {
+      if (!venue.buildingPosition) return false;
+      const dx = x - venue.buildingPosition.x;
+      const dy = y - venue.buildingPosition.y;
+      return Math.sqrt(dx * dx + dy * dy) < minDistance;
+    });
+  }
+
+  /**
+   * Create visual pathways between areas
+   */
+  private createPathways(): void {
+    const graphics = this.add.graphics();
+    graphics.setDepth(-5);
+
+    // Main horizontal path
+    graphics.fillStyle(0xd4cbb8, 0.5);
+    graphics.fillRoundedRect(50, this.worldHeight / 2 - 30, this.worldWidth - 100, 60, 8);
+
+    // Vertical connector paths
+    graphics.fillRoundedRect(this.worldWidth / 3 - 25, 100, 50, this.worldHeight - 200, 8);
+    graphics.fillRoundedRect((this.worldWidth * 2) / 3 - 25, 100, 50, this.worldHeight - 200, 8);
   }
 
   /**
@@ -225,14 +312,32 @@ export class CityMapScene extends Phaser.Scene {
       }
 
       const { x, y } = venue.buildingPosition;
-      const buildingWidth = 200;
-      const buildingHeight = 150;
       const color = 0x2a9d8f;
 
-      const building = this.add
-        .rectangle(x, y, buildingWidth, buildingHeight, color, 0.4)
-        .setStrokeStyle(4, color)
-        .setInteractive({ useHandCursor: true });
+      // Create building using sprite if available, otherwise use rectangle
+      let buildingSprite: Phaser.GameObjects.Image | null = null;
+      let buildingRect: Phaser.GameObjects.Rectangle | null = null;
+
+      // Try to use museum sprite for convention center (large building)
+      if (this.textures.exists('townhall')) {
+        buildingSprite = this.add.image(x, y, 'townhall');
+        buildingSprite.setScale(0.8);
+        buildingSprite.setDepth(5);
+        buildingSprite.setInteractive({ useHandCursor: true });
+
+        // Add subtle shadow
+        const shadow = this.add.ellipse(x, y + buildingSprite.displayHeight * 0.4, 180, 40, 0x000000, 0.15);
+        shadow.setDepth(4);
+      } else {
+        // Fallback to rectangle
+        const buildingWidth = 200;
+        const buildingHeight = 150;
+        buildingRect = this.add
+          .rectangle(x, y, buildingWidth, buildingHeight, color, 0.4)
+          .setStrokeStyle(4, color)
+          .setDepth(5)
+          .setInteractive({ useHandCursor: true });
+      }
 
       // Multi-line display name for building label
       const displayLines = venue.displayName.split(' ');
@@ -240,42 +345,184 @@ export class CityMapScene extends Phaser.Scene {
         ? displayLines.slice(0, 2).join(' ') + '\n' + displayLines.slice(2).join(' ')
         : venue.displayName;
 
-      this.add
-        .text(x, y, labelText, {
-          font: 'bold 16px Source Sans 3',
+      // Add label with background for readability
+      const labelY = buildingSprite
+        ? y + buildingSprite.displayHeight * 0.5 + 20
+        : y + 90;
+
+      const label = this.add
+        .text(x, labelY, labelText, {
+          font: 'bold 14px Source Sans 3',
           color: '#2C3E50',
           align: 'center',
+          backgroundColor: '#ffffffdd',
+          padding: { x: 8, y: 4 },
         })
-        .setOrigin(0.5);
+        .setOrigin(0.5)
+        .setDepth(10);
 
-      // Add hover effect
-      building.on('pointerover', () => {
-        building.setFillStyle(color, 0.7);
-      });
+      const target = buildingSprite || buildingRect;
 
-      building.on('pointerout', () => {
-        building.setFillStyle(color, 0.4);
-      });
-
-      // Click handler for entering building
-      building.on('pointerdown', () => {
-        const floors = venue.floors.map((f) => f.floor);
-        eventBus.emit('entered-building', {
-          building: venue.id,
-          venueId: this.currentVenueId,
-          floors,
-          currentFloor: venue.floors[0].floor,
+      if (target) {
+        // Add hover effect
+        target.on('pointerover', () => {
+          if (buildingSprite) {
+            buildingSprite.setTint(0xccffcc);
+          } else if (buildingRect) {
+            buildingRect.setFillStyle(color, 0.7);
+          }
+          label.setScale(1.05);
         });
-        this.cameraController.fadeOut(500);
-        this.time.delayedCall(500, () => {
-          this.scene.start('ConventionCenterScene', {
+
+        target.on('pointerout', () => {
+          if (buildingSprite) {
+            buildingSprite.clearTint();
+          } else if (buildingRect) {
+            buildingRect.setFillStyle(color, 0.4);
+          }
+          label.setScale(1);
+        });
+
+        // Click handler for entering building
+        target.on('pointerdown', () => {
+          const floors = venue.floors.map((f) => f.floor);
+          eventBus.emit('entered-building', {
+            building: venue.id,
             venueId: this.currentVenueId,
-            indoorVenueId: venue.id,
-            floor: venue.floors[0].floor,
+            floors,
+            currentFloor: venue.floors[0].floor,
+          });
+          this.cameraController.fadeOut(500);
+          this.time.delayedCall(500, () => {
+            this.scene.start('ConventionCenterScene', {
+              venueId: this.currentVenueId,
+              indoorVenueId: venue.id,
+              floor: venue.floors[0].floor,
+            });
           });
         });
-      });
+      }
     });
+
+    // Add decorative buildings around the map
+    this.createDecorativeBuildings();
+  }
+
+  /**
+   * Create decorative buildings to fill out the cityscape
+   */
+  private createDecorativeBuildings(): void {
+    const decorativeSpots = [
+      // Downtown area buildings
+      { x: 150, y: 200, sprite: 'hotel', scale: 0.6 },
+      { x: 600, y: 150, sprite: 'cafe', scale: 0.5 },
+      { x: 700, y: 700, sprite: 'store', scale: 0.5 },
+      // Cultural district buildings
+      { x: 1100, y: 200, sprite: 'museum', scale: 0.6 },
+      { x: 1300, y: 400, sprite: 'theater', scale: 0.55 },
+      { x: 950, y: 650, sprite: 'library', scale: 0.5 },
+      // Waterfront area
+      { x: 1900, y: 300, sprite: 'restaurant', scale: 0.5 },
+      { x: 2100, y: 600, sprite: 'apartment', scale: 0.5 },
+      { x: 1750, y: 800, sprite: 'mall', scale: 0.55 },
+      // Additional buildings for density
+      { x: 200, y: 700, sprite: 'postoffice', scale: 0.5 },
+      { x: 1500, y: 200, sprite: 'school', scale: 0.5 },
+      { x: 2200, y: 1000, sprite: 'hospital', scale: 0.55 },
+      // Southern area
+      { x: 300, y: 1200, sprite: 'firestation', scale: 0.5 },
+      { x: 800, y: 1400, sprite: 'police', scale: 0.5 },
+      { x: 1200, y: 1100, sprite: 'cafe', scale: 0.45 },
+      { x: 1600, y: 1300, sprite: 'store', scale: 0.45 },
+      { x: 2000, y: 1500, sprite: 'hotel', scale: 0.55 },
+    ];
+
+    decorativeSpots.forEach(({ x, y, sprite, scale }) => {
+      if (this.textures.exists(sprite)) {
+        // Add shadow first
+        const building = this.add.image(x, y, sprite);
+        building.setScale(scale);
+        building.setDepth(3);
+
+        // Shadow ellipse
+        const shadowWidth = building.displayWidth * 0.8;
+        const shadow = this.add.ellipse(x, y + building.displayHeight * 0.4, shadowWidth, 20, 0x000000, 0.1);
+        shadow.setDepth(2);
+      }
+    });
+
+    // Add vegetation (trees, bushes) around buildings
+    this.createVegetation();
+  }
+
+  /**
+   * Create vegetation (trees, bushes) for a more natural look
+   */
+  private createVegetation(): void {
+    const treeSprites = ['tree1', 'tree2', 'tree3', 'tree4', 'pine1', 'pine2'];
+    const bushSprites = ['bush1', 'bush2', 'bush3'];
+
+    // Tree positions - along paths and in parks
+    const treePositions = [
+      // Along main horizontal path
+      { x: 150, y: 870 }, { x: 350, y: 930 }, { x: 550, y: 870 },
+      { x: 750, y: 930 }, { x: 950, y: 870 }, { x: 1150, y: 930 },
+      { x: 1350, y: 870 }, { x: 1550, y: 930 }, { x: 1750, y: 870 },
+      { x: 1950, y: 930 }, { x: 2150, y: 870 },
+      // Park area in cultural district
+      { x: 1050, y: 500 }, { x: 1150, y: 550 }, { x: 1250, y: 480 },
+      // Waterfront trees
+      { x: 1700, y: 200 }, { x: 1850, y: 150 }, { x: 2000, y: 250 },
+      { x: 1700, y: 1200 }, { x: 1900, y: 1350 }, { x: 2100, y: 1150 },
+      // Downtown park
+      { x: 100, y: 500 }, { x: 200, y: 550 }, { x: 150, y: 600 },
+      // Southern area
+      { x: 500, y: 1500 }, { x: 700, y: 1550 }, { x: 900, y: 1600 },
+      { x: 1100, y: 1550 }, { x: 1300, y: 1500 },
+    ];
+
+    treePositions.forEach(({ x, y }) => {
+      const spriteKey = treeSprites[Math.floor(Math.random() * treeSprites.length)];
+      if (this.textures.exists(spriteKey)) {
+        const tree = this.add.image(x, y, spriteKey);
+        tree.setScale(0.35 + Math.random() * 0.15);
+        tree.setDepth(y); // Trees sort by y position
+        tree.setAlpha(0.9);
+      }
+    });
+
+    // Bushes near buildings and paths
+    const bushPositions = [
+      { x: 100, y: 280 }, { x: 200, y: 250 }, { x: 650, y: 200 },
+      { x: 1050, y: 280 }, { x: 1350, y: 350 }, { x: 1800, y: 380 },
+      { x: 300, y: 1250 }, { x: 850, y: 1450 }, { x: 1650, y: 1350 },
+      { x: 450, y: 500 }, { x: 550, y: 480 }, { x: 1000, y: 750 },
+      { x: 2050, y: 400 }, { x: 2150, y: 800 }, { x: 1400, y: 1100 },
+    ];
+
+    bushPositions.forEach(({ x, y }) => {
+      const spriteKey = bushSprites[Math.floor(Math.random() * bushSprites.length)];
+      if (this.textures.exists(spriteKey)) {
+        const bush = this.add.image(x, y, spriteKey);
+        bush.setScale(0.3 + Math.random() * 0.1);
+        bush.setDepth(y);
+        bush.setAlpha(0.85);
+      }
+    });
+
+    // Add fountain in central area if sprite exists
+    if (this.textures.exists('fountain')) {
+      const fountain = this.add.image(this.worldWidth / 2, this.worldHeight / 2 - 150, 'fountain');
+      fountain.setScale(0.5);
+      fountain.setDepth(800);
+    }
+
+    // Add pond in waterfront district
+    if (this.textures.exists('pond')) {
+      const pond = this.add.image(1850, 500, 'pond');
+      pond.setScale(0.6);
+      pond.setDepth(1);
+    }
   }
 
   /**
@@ -327,8 +574,11 @@ export class CityMapScene extends Phaser.Scene {
   }
 
   private createUI(): void {
-    // Title - fixed to camera (uses venue displayName from config)
-    this.add
+    // Get screen dimensions with fallbacks for edge cases where camera dimensions are 0
+    const screenWidth = this.cameras.main.width || window.innerWidth || 800;
+
+    // Title - fixed to viewport (uses venue displayName from config)
+    const title = this.add
       .text(20, 20, `Beat Street: ${this.venueConfig.displayName}`, {
         font: 'bold 24px Playfair Display',
         color: '#2C3E50',
@@ -337,6 +587,7 @@ export class CityMapScene extends Phaser.Scene {
       })
       .setScrollFactor(0)
       .setDepth(100);
+    this.uiElements.push(title);
 
     // Zoom indicator
     this.zoomText = this.add
@@ -348,36 +599,43 @@ export class CityMapScene extends Phaser.Scene {
       })
       .setScrollFactor(0)
       .setDepth(100);
+    this.uiElements.push(this.zoomText);
 
-    // Minimap container
-    const minimapX = this.cameras.main.width - 160;
+    // Minimap container - position from right edge with minimum position
+    const minimapX = Math.max(20, screenWidth - 160);
     const minimapY = 20;
     const minimapWidth = 140;
     const minimapHeight = 105;
 
-    this.add
+    const minimapBg = this.add
       .rectangle(minimapX, minimapY, minimapWidth, minimapHeight, 0xf0ebe0, 0.9)
       .setOrigin(0)
       .setStrokeStyle(2, 0x2c3e50)
       .setScrollFactor(0)
       .setDepth(100);
+    this.uiElements.push(minimapBg);
 
-    this.add
+    const minimapLabel = this.add
       .text(minimapX + 5, minimapY + 5, 'Map', {
         font: 'bold 12px Source Sans 3',
         color: '#2C3E50',
       })
       .setScrollFactor(0)
       .setDepth(101);
+    this.uiElements.push(minimapLabel);
 
     // Minimap player indicator
     this.minimapIndicator = this.add
       .rectangle(minimapX + 70, minimapY + 60, 4, 4, 0xe76f51)
       .setScrollFactor(0)
       .setDepth(101);
+    this.uiElements.push(this.minimapIndicator);
   }
 
   private createInstructions(): void {
+    // Get screen height with fallback for edge cases
+    const screenHeight = this.cameras.main.height || window.innerHeight || 600;
+
     const isMobile = this.inputManager.isMobileDevice();
     const instructions = isMobile
       ? [
@@ -391,8 +649,8 @@ export class CityMapScene extends Phaser.Scene {
           'E or Space - Interact with nearby POI',
         ];
 
-    this.add
-      .text(20, this.cameras.main.height - 100, instructions.join('\n'), {
+    const instructionsText = this.add
+      .text(20, Math.max(100, screenHeight - 100), instructions.join('\n'), {
         font: '12px Source Sans 3',
         color: '#2C3E50',
         backgroundColor: '#ffffff',
@@ -401,6 +659,11 @@ export class CityMapScene extends Phaser.Scene {
       })
       .setScrollFactor(0)
       .setDepth(100);
+    this.uiElements.push(instructionsText);
+
+    // Configure cameras after all UI elements are created
+    // Main camera ignores UI elements, UI camera renders them at fixed position
+    this.cameras.main.ignore(this.uiElements);
   }
 
   update(time: number, _delta: number): void {
@@ -416,7 +679,8 @@ export class CityMapScene extends Phaser.Scene {
 
     // Update minimap indicator
     const playerPos = this.player.getPosition();
-    const minimapX = this.cameras.main.width - 160;
+    const screenWidth = this.cameras.main.width || window.innerWidth || 800;
+    const minimapX = Math.max(20, screenWidth - 160);
     const minimapY = 20;
     const scaleX = 140 / this.worldWidth;
     const scaleY = 105 / this.worldHeight;

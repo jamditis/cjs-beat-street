@@ -10,8 +10,11 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
   backgroundColor: '#F5F0E6',
   scale: {
     mode: Phaser.Scale.RESIZE,
-    width: '100%',
-    height: '100%',
+    // Use explicit dimensions for initial canvas size (RESIZE mode will adapt to container)
+    // Percentage-based dimensions can fail on mobile if container isn't ready
+    width: window.innerWidth || 800,
+    height: window.innerHeight || 600,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
   },
   physics: {
     default: 'arcade',

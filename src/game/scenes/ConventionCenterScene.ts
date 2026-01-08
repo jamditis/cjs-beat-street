@@ -36,7 +36,9 @@ export class ConventionCenterScene extends Phaser.Scene {
   private worldWidth = 1600;
   private worldHeight = 1200;
 
-  // UI Elements
+  // UI Elements (fixed to viewport, not affected by camera zoom)
+  private uiCamera!: Phaser.Cameras.Scene2D.Camera;
+  private uiElements: Phaser.GameObjects.GameObject[] = [];
   private floorText!: Phaser.GameObjects.Text;
 
   // Floor transition
@@ -122,6 +124,13 @@ export class ConventionCenterScene extends Phaser.Scene {
     // Fade in camera
     this.cameraController.fadeIn(500);
 
+    // Create a separate UI camera that doesn't zoom
+    // This ensures HUD elements stay fixed to the viewport
+    const cameraWidth = this.cameras.main.width || window.innerWidth || 800;
+    const cameraHeight = this.cameras.main.height || window.innerHeight || 600;
+    this.uiCamera = this.cameras.add(0, 0, cameraWidth, cameraHeight);
+    this.uiCamera.setScroll(0, 0);
+
     // Initialize POIManager
     this.poiManager = new POIManager({
       scene: this,
@@ -165,30 +174,88 @@ export class ConventionCenterScene extends Phaser.Scene {
   }
 
   private createInteriorBackground(): void {
-    // Main background
+    // Main background - warm cream color for indoor flooring
     this.add.rectangle(
       this.worldWidth / 2,
       this.worldHeight / 2,
       this.worldWidth,
       this.worldHeight,
-      0xfaf8f5
+      0xf5f2eb
     );
 
-    // Create a floor tile pattern
+    // Create a subtle floor tile pattern (very light, like polished floor)
     const graphics = this.add.graphics();
-    graphics.lineStyle(1, 0xe8e0d5, 0.4);
 
-    const tileSize = 80;
+    // Very subtle tile lines
+    graphics.lineStyle(1, 0xe5dfd5, 0.2);
+
+    const tileSize = 120;
     for (let x = 0; x <= this.worldWidth; x += tileSize) {
       graphics.lineBetween(x, 0, x, this.worldHeight);
     }
     for (let y = 0; y <= this.worldHeight; y += tileSize) {
       graphics.lineBetween(0, y, this.worldWidth, y);
     }
+
+    // Add subtle floor texture variation
+    this.createFloorTexture();
+
+    // Add building walls/borders
+    this.createWalls();
+  }
+
+  /**
+   * Create subtle floor texture variations
+   */
+  private createFloorTexture(): void {
+    const graphics = this.add.graphics();
+    graphics.setDepth(-1);
+
+    // Subtle alternating tile shading
+    const tileSize = 120;
+    for (let row = 0; row < Math.ceil(this.worldHeight / tileSize); row++) {
+      for (let col = 0; col < Math.ceil(this.worldWidth / tileSize); col++) {
+        if ((row + col) % 2 === 0) {
+          graphics.fillStyle(0xfaf7f0, 0.3);
+          graphics.fillRect(col * tileSize, row * tileSize, tileSize, tileSize);
+        }
+      }
+    }
+  }
+
+  /**
+   * Create building walls and structural elements
+   */
+  private createWalls(): void {
+    const graphics = this.add.graphics();
+    graphics.setDepth(0);
+
+    // Outer wall border
+    graphics.lineStyle(8, 0x8b7355, 0.6);
+    graphics.strokeRect(20, 20, this.worldWidth - 40, this.worldHeight - 40);
+
+    // Inner shadow effect for depth
+    graphics.lineStyle(3, 0xa08060, 0.3);
+    graphics.strokeRect(28, 28, this.worldWidth - 56, this.worldHeight - 56);
+
+    // Add corner pillars for architectural detail
+    const pillarSize = 40;
+    const pillarColor = 0x9b8575;
+    const corners = [
+      { x: 40, y: 40 },
+      { x: this.worldWidth - 40, y: 40 },
+      { x: 40, y: this.worldHeight - 40 },
+      { x: this.worldWidth - 40, y: this.worldHeight - 40 },
+    ];
+
+    corners.forEach(({ x, y }) => {
+      this.add.rectangle(x, y, pillarSize, pillarSize, pillarColor, 0.3)
+        .setDepth(1);
+    });
   }
 
   private createUI(): void {
-    // Floor indicator - fixed to camera
+    // Floor indicator - fixed to viewport
     this.floorText = this.add
       .text(20, 20, `${this.indoorVenueConfig.displayName} - Floor ${this.currentFloor}`, {
         font: 'bold 22px Playfair Display',
@@ -198,6 +265,7 @@ export class ConventionCenterScene extends Phaser.Scene {
       })
       .setScrollFactor(0)
       .setDepth(100);
+    this.uiElements.push(this.floorText);
 
     // Exit button
     const exitBtn = this.add
@@ -206,8 +274,9 @@ export class ConventionCenterScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setInteractive({ useHandCursor: true })
       .setDepth(100);
+    this.uiElements.push(exitBtn);
 
-    this.add
+    const exitLabel = this.add
       .text(70, 90, 'Exit', {
         font: 'bold 16px Source Sans 3',
         color: '#FFFFFF',
@@ -215,6 +284,7 @@ export class ConventionCenterScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setScrollFactor(0)
       .setDepth(101);
+    this.uiElements.push(exitLabel);
 
     // Exit button hover effect
     exitBtn.on('pointerover', () => {
@@ -235,10 +305,12 @@ export class ConventionCenterScene extends Phaser.Scene {
 
   private createPOIInfoPanel(): void {
     // Will be used to show details when hovering over POIs
+    const screenWidth = this.cameras.main.width || window.innerWidth || 800;
+    const screenHeight = this.cameras.main.height || window.innerHeight || 600;
     const panelWidth = 250;
     const panelHeight = 80;
-    const panelX = this.cameras.main.width / 2 - panelWidth / 2;
-    const panelY = this.cameras.main.height - panelHeight - 20;
+    const panelX = screenWidth / 2 - panelWidth / 2;
+    const panelY = screenHeight - panelHeight - 20;
 
     const panel = this.add
       .rectangle(panelX, panelY, panelWidth, panelHeight, 0x2c3e50, 0.9)
@@ -248,6 +320,7 @@ export class ConventionCenterScene extends Phaser.Scene {
       .setVisible(false);
 
     panel.setName('poi-info-panel');
+    this.uiElements.push(panel);
   }
 
   private createInstructions(): void {
@@ -264,8 +337,9 @@ export class ConventionCenterScene extends Phaser.Scene {
           'E or Space - Interact with nearby POI',
         ];
 
-    this.add
-      .text(20, this.cameras.main.height - 90, instructions.join('\n'), {
+    const screenHeight = this.cameras.main.height || window.innerHeight || 600;
+    const instructionsText = this.add
+      .text(20, Math.max(100, screenHeight - 90), instructions.join('\n'), {
         font: '12px Source Sans 3',
         color: '#2C3E50',
         backgroundColor: '#ffffff',
@@ -274,6 +348,11 @@ export class ConventionCenterScene extends Phaser.Scene {
       })
       .setScrollFactor(0)
       .setDepth(100);
+    this.uiElements.push(instructionsText);
+
+    // Configure cameras after all UI elements are created
+    // Main camera ignores UI elements, UI camera renders them at fixed position
+    this.cameras.main.ignore(this.uiElements);
   }
 
   private createFloorLayout(_floor: number): void {

@@ -170,9 +170,13 @@ export class CameraController {
   private updateJoystickZone(): void {
     // Joystick is typically in the bottom-left corner
     // Define a zone where single-touch is reserved for the joystick
-    const gameHeight = this.scene.scale.height;
+    const gameHeight = this.scene.scale.height || window.innerHeight || 600;
+
+    // Safety check: ensure valid dimensions
+    if (gameHeight <= 0) return;
+
     this.joystickZone.x = 0;
-    this.joystickZone.y = gameHeight - 200;
+    this.joystickZone.y = Math.max(0, gameHeight - 200);
     this.joystickZone.width = 200;
     this.joystickZone.height = 200;
   }
