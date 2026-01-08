@@ -1,12 +1,28 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
-  updatePresence,
-  subscribeToZonePresence,
-  goOffline,
-  PresenceData,
-} from '../services/presence';
+  setupPresence,
+  updateZone,
+  subscribeToPresence as subscribeToRtdbPresence,
+  removePresence,
+  RealtimePresenceData,
+} from '../services/realtime-presence';
 import { eventBus } from '../lib/EventBus';
 import { VenueId } from '../types/venue';
+
+/**
+ * Presence data returned by the hook (maintains API compatibility)
+ */
+export interface PresenceData {
+  uid: string;
+  displayName: string;
+  zone: string;
+  venueId?: VenueId;
+  mapId?: string;
+  floor?: number;
+  status: 'active' | 'idle' | 'away';
+  shareLocation: boolean;
+  updatedAt: number | object;
+}
 
 interface UsePresenceOptions {
   uid: string;
@@ -28,10 +44,28 @@ interface ClusterGroup {
   count: number;
 }
 
+/**
+ * React hook for managing user presence using Firebase Realtime Database.
+ *
+ * This hook:
+ * - Sets up presence with automatic disconnect cleanup
+ * - Updates presence when zone or venue context changes
+ * - Subscribes to nearby users' presence
+ * - Handles cleanup on unmount
+ *
+ * Uses RTDB instead of Firestore for cost efficiency:
+ * - Free tier: 100K simultaneous connections
+ * - Native onDisconnect() for automatic cleanup
+ * - Lower latency (~600ms vs 1500ms)
+ */
 export function usePresence(options: UsePresenceOptions | null) {
   const [nearbyUsers, setNearbyUsers] = useState<PresenceData[]>([]);
   const [currentZone, setCurrentZone] = useState<string>('');
   const [currentPosition, setCurrentPosition] = useState<{ x: number; y: number } | null>(null);
+  const [isSetup, setIsSetup] = useState(false);
+
+  // Track if we've set up presence to avoid duplicate setup
+  const setupRef = useRef(false);
 
   // Extract venue context from options
   const venueId = options?.venueId;
@@ -39,11 +73,37 @@ export function usePresence(options: UsePresenceOptions | null) {
   const floor = options?.floor;
   const enabled = options?.enabled ?? true;
 
+  // Set up presence when user connects (one-time setup)
+  useEffect(() => {
+    if (!options || !enabled || setupRef.current) return;
+
+    const setup = async () => {
+      try {
+        await setupPresence({
+          uid: options.uid,
+          displayName: options.displayName,
+          zone: currentZone || 'lobby',
+          venueId: options.venueId,
+          mapId: options.mapId,
+          floor: options.floor,
+          shareLocation: options.shareLocation,
+        });
+        setupRef.current = true;
+        setIsSetup(true);
+        console.log('[usePresence] Presence set up successfully');
+      } catch (error) {
+        console.error('[usePresence] Failed to set up presence:', error);
+      }
+    };
+
+    setup();
+  }, [options?.uid, options?.displayName, enabled]);
+
   // Update presence when zone or venue context changes
   useEffect(() => {
-    if (!options || !currentZone || !enabled) return;
+    if (!options || !currentZone || !enabled || !isSetup) return;
 
-    updatePresence(options.uid, {
+    updateZone(options.uid, {
       displayName: options.displayName,
       zone: currentZone,
       shareLocation: options.shareLocation,
@@ -51,33 +111,46 @@ export function usePresence(options: UsePresenceOptions | null) {
       venueId: options.venueId,
       mapId: options.mapId,
       floor: options.floor,
+    }).catch((error) => {
+      console.error('[usePresence] Failed to update zone:', error);
     });
-  }, [options, currentZone, enabled]);
+  }, [options, currentZone, enabled, isSetup]);
 
-  // Subscribe to nearby users in the same zone and venue context
+  // Subscribe to nearby users in the same venue context
   useEffect(() => {
-    if (!currentZone || !options?.shareLocation || !enabled) {
+    if (!options?.shareLocation || !enabled) {
       setNearbyUsers([]);
       return;
     }
 
-    const unsubscribe = subscribeToZonePresence(
+    const unsubscribe = subscribeToRtdbPresence(
+      (users: RealtimePresenceData[]) => {
+        // Convert RTDB format to hook format (maintains compatibility)
+        const formattedUsers: PresenceData[] = users.map((u) => ({
+          uid: u.uid,
+          displayName: u.displayName,
+          zone: u.zone,
+          venueId: u.venueId,
+          mapId: u.mapId,
+          floor: u.floor,
+          status: u.status,
+          shareLocation: u.shareLocation,
+          updatedAt: u.updatedAt,
+        }));
+
+        setNearbyUsers(formattedUsers);
+        eventBus.emit('presence-update', { users: formattedUsers });
+      },
       {
-        zone: currentZone,
         venueId,
         mapId,
         floor,
-      },
-      (users) => {
-        // Filter out self
-        const others = users.filter((u) => u.uid !== options.uid);
-        setNearbyUsers(others);
-        eventBus.emit('presence-update', { users: others });
+        excludeUid: options.uid,
       }
     );
 
     return unsubscribe;
-  }, [currentZone, options, venueId, mapId, floor, enabled]);
+  }, [options?.shareLocation, options?.uid, venueId, mapId, floor, enabled]);
 
   // Listen for player movement to update zone and position
   useEffect(() => {
@@ -94,29 +167,42 @@ export function usePresence(options: UsePresenceOptions | null) {
     return unsubscribe;
   }, [currentZone]);
 
-  // Go offline when component unmounts or user leaves
+  // Clean up presence when component unmounts or user leaves
   useEffect(() => {
     if (!options || !enabled) return;
 
     const handleBeforeUnload = () => {
-      goOffline(options.uid);
+      // Note: removePresence may not complete before page unloads,
+      // but the onDisconnect handler set up in setupPresence will
+      // ensure cleanup happens on the server side
+      removePresence(options.uid).catch(() => {
+        // Ignore errors during unload
+      });
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      goOffline(options.uid);
+      if (setupRef.current) {
+        removePresence(options.uid).catch((error) => {
+          console.error('[usePresence] Failed to remove presence:', error);
+        });
+        setupRef.current = false;
+        setIsSetup(false);
+      }
     };
-  }, [options, enabled]);
+  }, [options?.uid, enabled]);
 
   const updateStatus = useCallback(
     (status: 'active' | 'idle' | 'away') => {
-      if (options && enabled) {
-        updatePresence(options.uid, { status });
+      if (options && enabled && isSetup) {
+        updateZone(options.uid, { status }).catch((error) => {
+          console.error('[usePresence] Failed to update status:', error);
+        });
       }
     },
-    [options, enabled]
+    [options?.uid, enabled, isSetup]
   );
 
   const updateMyPresence = useCallback(
@@ -127,19 +213,22 @@ export function usePresence(options: UsePresenceOptions | null) {
       mapId?: string;
       floor?: number;
     }) => {
-      if (!options || !enabled) return false;
+      if (!options || !enabled || !isSetup) return false;
 
-      // Use provided venue data or fall back to current context
-      const presenceData: Parameters<typeof updatePresence>[1] = {
-        ...data,
-        venueId: data.venueId ?? venueId,
-        mapId: data.mapId ?? mapId,
-        floor: data.floor ?? floor,
-      };
-
-      return updatePresence(options.uid, presenceData);
+      try {
+        await updateZone(options.uid, {
+          ...data,
+          venueId: data.venueId ?? venueId,
+          mapId: data.mapId ?? mapId,
+          floor: data.floor ?? floor,
+        });
+        return true;
+      } catch (error) {
+        console.error('[usePresence] Failed to update presence:', error);
+        return false;
+      }
     },
-    [options, venueId, mapId, floor, enabled]
+    [options?.uid, venueId, mapId, floor, enabled, isSetup]
   );
 
   // Filter users by distance from current position
@@ -220,5 +309,6 @@ export function usePresence(options: UsePresenceOptions | null) {
     venueId,
     mapId,
     floor,
+    isSetup,
   };
 }

@@ -4,6 +4,7 @@ import { X, MapPin, Building2, Hand, CheckCircle } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { eventBus, UserPresence } from '../lib/EventBus';
+import { useKeyboardNav } from '../hooks/useKeyboardNav';
 
 interface AttendeeDetails extends UserPresence {
   organization?: string;
@@ -14,6 +15,8 @@ export function AttendeeCard() {
   const [selectedAttendee, setSelectedAttendee] = useState<AttendeeDetails | null>(null);
   const [waveStatus, setWaveStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
   const nearbyUsersRef = useRef<UserPresence[]>([]);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   // Keep track of nearby users from presence updates
   useEffect(() => {
@@ -82,19 +85,20 @@ export function AttendeeCard() {
     setWaveStatus('idle');
   }, []);
 
-  // Handle Escape key to close panel
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && selectedAttendee) {
-        handleClose();
-      }
-    };
+  // Keyboard navigation with focus trap
+  useKeyboardNav({
+    onEscape: handleClose,
+    trapFocus: true,
+    containerRef: panelRef,
+    enabled: selectedAttendee !== null,
+  });
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [selectedAttendee, handleClose]);
+  // Focus close button when panel opens
+  useEffect(() => {
+    if (selectedAttendee && closeButtonRef.current) {
+      closeButtonRef.current.focus();
+    }
+  }, [selectedAttendee]);
 
   const handleWave = async () => {
     if (!selectedAttendee || waveStatus !== 'idle') return;
@@ -159,6 +163,7 @@ export function AttendeeCard() {
     <AnimatePresence>
       {selectedAttendee && (
         <motion.div
+          ref={panelRef}
           initial={{ x: '100%' }}
           animate={{ x: 0 }}
           exit={{ x: '100%' }}
@@ -167,19 +172,21 @@ export function AttendeeCard() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="attendee-card-title"
+          aria-describedby="attendee-card-description"
         >
           <button
+            ref={closeButtonRef}
             onClick={handleClose}
-            className="absolute top-4 right-4 p-2 rounded-full hover:bg-cream transition-colors"
-            aria-label="Close"
+            className="absolute top-4 right-4 p-2 rounded-full hover:bg-cream transition-colors focus:outline-none focus:ring-2 focus:ring-teal-600"
+            aria-label="Close attendee details"
           >
-            <X className="w-5 h-5 text-ink" />
+            <X className="w-5 h-5 text-ink" aria-hidden="true" />
           </button>
 
           {/* Header */}
           <div className="mb-6">
             <div className="flex items-center gap-2 text-teal-600 mb-3">
-              <Building2 className="w-4 h-4" />
+              <Building2 className="w-4 h-4" aria-hidden="true" />
               <span className="text-xs font-semibold uppercase tracking-wide">
                 Attendee
               </span>
@@ -210,44 +217,52 @@ export function AttendeeCard() {
             {/* Organization */}
             {selectedAttendee.organization && (
               <div className="flex items-center gap-2 text-ink/70 text-sm mb-2">
-                <Building2 className="w-4 h-4 flex-shrink-0" />
+                <Building2 className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
                 <span className="truncate">{selectedAttendee.organization}</span>
               </div>
             )}
 
             {/* Location */}
-            <div className="flex items-center gap-2 text-ink/70 text-sm">
-              <MapPin className="w-4 h-4 flex-shrink-0" />
-              <span className="truncate">{selectedAttendee.zone}</span>
+            <div id="attendee-card-description" className="flex items-center gap-2 text-ink/70 text-sm">
+              <MapPin className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+              <span className="truncate">Currently in {selectedAttendee.zone}</span>
             </div>
           </div>
 
           {/* Actions */}
-          <div className="space-y-3 mt-auto">
+          <div className="space-y-3 mt-auto" role="group" aria-label="Actions">
             <button
               onClick={handleWave}
               disabled={waveStatus !== 'idle'}
-              className={`w-full py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
+              className={`w-full py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
                 waveStatus === 'sent'
-                  ? 'bg-green-600 text-white'
+                  ? 'bg-green-600 text-white focus:ring-green-600'
                   : waveStatus === 'sending'
-                  ? 'bg-teal-400 text-white cursor-wait'
-                  : 'bg-teal-600 text-white hover:bg-teal-700'
+                  ? 'bg-teal-400 text-white cursor-wait focus:ring-teal-400'
+                  : 'bg-teal-600 text-white hover:bg-teal-700 focus:ring-teal-600'
               }`}
+              aria-label={
+                waveStatus === 'sent'
+                  ? `Wave sent to ${selectedAttendee.displayName}`
+                  : waveStatus === 'sending'
+                  ? `Sending wave to ${selectedAttendee.displayName}`
+                  : `Send wave to ${selectedAttendee.displayName}`
+              }
+              aria-live="polite"
             >
               {waveStatus === 'sent' ? (
                 <>
-                  <CheckCircle className="w-5 h-5" />
+                  <CheckCircle className="w-5 h-5" aria-hidden="true" />
                   Wave Sent!
                 </>
               ) : waveStatus === 'sending' ? (
                 <>
-                  <Hand className="w-5 h-5 animate-bounce" />
+                  <Hand className="w-5 h-5 animate-bounce" aria-hidden="true" />
                   Sending...
                 </>
               ) : (
                 <>
-                  <Hand className="w-5 h-5" />
+                  <Hand className="w-5 h-5" aria-hidden="true" />
                   Send Wave
                 </>
               )}
@@ -255,9 +270,10 @@ export function AttendeeCard() {
 
             <button
               onClick={handleFindOnMap}
-              className="w-full py-3 border-2 border-teal-600 text-teal-600 rounded-lg font-semibold hover:bg-teal-50 transition-colors flex items-center justify-center gap-2"
+              className="w-full py-3 border-2 border-teal-600 text-teal-600 rounded-lg font-semibold hover:bg-teal-50 transition-colors flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2"
+              aria-label={`Find ${selectedAttendee.displayName} on map`}
             >
-              <MapPin className="w-5 h-5" />
+              <MapPin className="w-5 h-5" aria-hidden="true" />
               Find on Map
             </button>
           </div>

@@ -60,4 +60,16 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'phaser': ['phaser'],
+          'firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/database'],
+          'react-vendor': ['react', 'react-dom', '@tanstack/react-query'],
+          'ui-vendor': ['framer-motion', 'lucide-react'],
+        }
+      }
+    }
+  }
 });

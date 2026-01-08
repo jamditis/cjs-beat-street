@@ -78,6 +78,48 @@ export interface GameEvents {
     method: string;
     progress: unknown;
   };
+  // Schedule events
+  'schedule-session-selected': { sessionId: string; session: unknown };
+  'schedule-navigate-to-session': { sessionId: string; room?: string };
+  'schedule-event': { sessionId: string; session: unknown; action: string };
+  'open-schedule-panel': { room?: string; venueName?: string };
+  // Achievement events
+  'achievement-unlocked': {
+    achievement: { id: string; name: string; description: string; points: number };
+    totalPoints: number;
+    unlockedAt: Date;
+  };
+  'open-achievements-panel': Record<string, never>;
+  // Notification events
+  'notification-added': { id: string; type: string; title: string; message: string };
+  'notification-read': { notificationId: string };
+  'notifications-all-read': Record<string, never>;
+  'notification-removed': { notificationId: string };
+  'notifications-cleared': Record<string, never>;
+  'notification-clicked': { notificationId: string; data?: unknown };
+  'notification-preferences-changed': { enabled: boolean };
+  'reminder-scheduled': { id: string; sessionId: string; scheduledFor: Date };
+  'reminder-cancelled': { sessionId: string };
+  'session-reminder-triggered': { reminder: unknown; notification: unknown };
+  // Navigation events
+  'navigation-started': {
+    target: { poiId: string; name?: string; position: { x: number; y: number } };
+    distance: number | null;
+  };
+  'navigation-update': {
+    target: { poiId: string; name?: string; position: { x: number; y: number } };
+    distance: number;
+    direction: number;
+    compass: string;
+    playerPosition: { x: number; y: number };
+  };
+  'navigation-arrived': {
+    target: { poiId: string; name?: string; position: { x: number; y: number } };
+  };
+  'navigation-cancelled': {
+    target?: { poiId: string; name?: string; position: { x: number; y: number } };
+  };
+  'cancel-navigation': Record<string, never>;
 }
 
 export interface UserPresence {
