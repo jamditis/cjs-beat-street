@@ -101,6 +101,25 @@ export interface GameEvents {
   'reminder-scheduled': { id: string; sessionId: string; scheduledFor: Date };
   'reminder-cancelled': { sessionId: string };
   'session-reminder-triggered': { reminder: unknown; notification: unknown };
+  // Navigation events
+  'navigation-started': {
+    target: { poiId: string; name?: string; position: { x: number; y: number } };
+    distance: number | null;
+  };
+  'navigation-update': {
+    target: { poiId: string; name?: string; position: { x: number; y: number } };
+    distance: number;
+    direction: number;
+    compass: string;
+    playerPosition: { x: number; y: number };
+  };
+  'navigation-arrived': {
+    target: { poiId: string; name?: string; position: { x: number; y: number } };
+  };
+  'navigation-cancelled': {
+    target?: { poiId: string; name?: string; position: { x: number; y: number } };
+  };
+  'cancel-navigation': Record<string, never>;
 }
 
 export interface UserPresence {

@@ -11,6 +11,7 @@ import { SkipLinks } from './components/SkipLinks';
 import { Announcer } from './components/VisuallyHidden';
 import { NotificationBell } from './components/NotificationBell';
 import { NotificationToast } from './components/NotificationToast';
+import { NavigationOverlay } from './components/NavigationOverlay';
 import { usePresence } from './hooks/usePresence';
 import { useOffline } from './hooks/useOffline';
 import { useAnalyticsInit } from './hooks/useAnalytics';
@@ -446,6 +447,7 @@ function BeatStreetApp() {
       <FloorSelector />
       <PresenceList />
       <TouchUI />
+      <NavigationOverlay />
       <Suspense fallback={null}>
         <AttendeeTooltip />
       </Suspense>
