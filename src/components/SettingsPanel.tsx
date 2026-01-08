@@ -1,10 +1,11 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, MapPin, LogOut, Settings, Building2, Award, User } from 'lucide-react';
+import { X, MapPin, LogOut, Settings, Building2, Award, User, BarChart3 } from 'lucide-react';
 import { VenueId } from '../types/venue';
 import { VenueSelector, getVenueDisplayName } from './VenueSelector';
 import { getPlayerAppearance, setPlayerAppearance, getAvailablePresets } from '../utils/playerCustomization';
 import { eventBus } from '../lib/EventBus';
+import { useAnalyticsConsent } from '../hooks/useAnalytics';
 
 interface SettingsPanelProps {
   isOpen: boolean;
@@ -36,6 +37,7 @@ export function SettingsPanel({
   const [showVenueChange, setShowVenueChange] = useState(false);
   const [playerAppearance, setPlayerAppearanceState] = useState(() => getPlayerAppearance());
   const availablePresets = getAvailablePresets();
+  const { analyticsEnabled, setAnalyticsEnabled } = useAnalyticsConsent();
 
   // Handle Escape key to close
   const handleKeyDown = useCallback(
@@ -180,6 +182,41 @@ export function SettingsPanel({
                   </span>
                 </button>
               </div>
+            </div>
+
+            {/* Analytics toggle */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-start gap-3">
+                  <BarChart3 className="w-5 h-5 text-teal-600 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-ink">Usage analytics</p>
+                    <p className="text-sm text-ink/60">
+                      Help improve the app with anonymous usage data
+                    </p>
+                  </div>
+                </div>
+                <button
+                  role="switch"
+                  aria-checked={analyticsEnabled}
+                  onClick={() => setAnalyticsEnabled(!analyticsEnabled)}
+                  className={`relative w-12 h-7 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2 ${
+                    analyticsEnabled ? 'bg-teal-600' : 'bg-ink/20'
+                  }`}
+                >
+                  <span
+                    className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
+                      analyticsEnabled ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                  <span className="sr-only">
+                    {analyticsEnabled ? 'Disable' : 'Enable'} usage analytics
+                  </span>
+                </button>
+              </div>
+              <p className="text-xs text-ink/50 mt-2 ml-8">
+                No personal information is collected. Analytics help sponsors understand engagement.
+              </p>
             </div>
 
             {/* Player Appearance */}

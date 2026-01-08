@@ -83,6 +83,24 @@ export interface GameEvents {
   'schedule-navigate-to-session': { sessionId: string; room?: string };
   'schedule-event': { sessionId: string; session: unknown; action: string };
   'open-schedule-panel': { room?: string; venueName?: string };
+  // Achievement events
+  'achievement-unlocked': {
+    achievement: { id: string; name: string; description: string; points: number };
+    totalPoints: number;
+    unlockedAt: Date;
+  };
+  'open-achievements-panel': Record<string, never>;
+  // Notification events
+  'notification-added': { id: string; type: string; title: string; message: string };
+  'notification-read': { notificationId: string };
+  'notifications-all-read': Record<string, never>;
+  'notification-removed': { notificationId: string };
+  'notifications-cleared': Record<string, never>;
+  'notification-clicked': { notificationId: string; data?: unknown };
+  'notification-preferences-changed': { enabled: boolean };
+  'reminder-scheduled': { id: string; sessionId: string; scheduledFor: Date };
+  'reminder-cancelled': { sessionId: string };
+  'session-reminder-triggered': { reminder: unknown; notification: unknown };
 }
 
 export interface UserPresence {

@@ -7,10 +7,16 @@ import { PresenceList } from './components/PresenceList';
 import { ConsentModal } from './components/ConsentModal';
 import { TouchUI } from './components/TouchUI';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { SkipLinks } from './components/SkipLinks';
+import { Announcer } from './components/VisuallyHidden';
+import { NotificationBell } from './components/NotificationBell';
+import { NotificationToast } from './components/NotificationToast';
 import { usePresence } from './hooks/usePresence';
 import { useOffline } from './hooks/useOffline';
+import { useAnalyticsInit } from './hooks/useAnalytics';
 import { eventBus } from './lib/EventBus';
 import { VenueId } from './types/venue';
+import { initializeReminders } from './services/notifications';
 
 // Lazy-loaded components for code splitting
 // GameContainer loads Phaser (~1.1MB) - defer until after auth
@@ -22,12 +28,16 @@ const AttendeeCard = lazy(() => import('./components/AttendeeCard').then(m => ({
 const LeaderboardPanel = lazy(() => import('./components/LeaderboardPanel').then(m => ({ default: m.LeaderboardPanel })));
 const AttendeeTooltip = lazy(() => import('./components/AttendeeTooltip').then(m => ({ default: m.AttendeeTooltip })));
 const AttendeeProfileModal = lazy(() => import('./components/AttendeeProfileModal').then(m => ({ default: m.AttendeeProfileModal })));
+const AchievementPanel = lazy(() => import('./components/AchievementPanel').then(m => ({ default: m.AchievementPanel })));
+const AchievementToast = lazy(() => import('./components/AchievementToast').then(m => ({ default: m.AchievementToast })));
+const NotificationPanel = lazy(() => import('./components/NotificationPanel').then(m => ({ default: m.NotificationPanel })));
 
 // Loading fallback for lazy components
 function LoadingSpinner() {
   return (
-    <div className="flex items-center justify-center p-4">
-      <div className="animate-spin rounded-full h-8 w-8 border-4 border-teal-600 border-t-transparent" />
+    <div className="flex items-center justify-center p-4" role="status" aria-label="Loading">
+      <div className="animate-spin rounded-full h-8 w-8 border-4 border-teal-600 border-t-transparent" aria-hidden="true" />
+      <span className="sr-only">Loading...</span>
     </div>
   );
 }
@@ -49,6 +59,9 @@ interface VerifiedAttendee {
 }
 
 function BeatStreetApp() {
+  // Initialize analytics on app startup
+  useAnalyticsInit();
+
   const [showConsentModal, setShowConsentModal] = useState(
     () => !localStorage.getItem('location-consent')
   );
@@ -57,6 +70,8 @@ function BeatStreetApp() {
   );
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   const [showLeaderboardPanel, setShowLeaderboardPanel] = useState(false);
+  const [showAchievementsPanel, setShowAchievementsPanel] = useState(false);
+  const [showNotificationsPanel, setShowNotificationsPanel] = useState(false);
   const [_firebaseUser, setFirebaseUser] = useState<User | null>(null);
   const [attendee, setAttendee] = useState<VerifiedAttendee | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -98,6 +113,19 @@ function BeatStreetApp() {
       unsubscribeMenu();
       unsubscribeLeaderboard();
     };
+  }, []);
+
+  // Listen for achievements panel open event
+  useEffect(() => {
+    const unsubscribe = eventBus.on('open-achievements-panel', () => {
+      setShowAchievementsPanel(true);
+    });
+    return unsubscribe;
+  }, []);
+
+  // Initialize notification reminders on app load
+  useEffect(() => {
+    initializeReminders();
   }, []);
 
   // Check for cached verification
@@ -249,9 +277,9 @@ function BeatStreetApp() {
   // Loading state
   if (authLoading) {
     return (
-      <div className="h-full w-full flex items-center justify-center bg-cream">
+      <div className="h-full w-full flex items-center justify-center bg-cream" role="status" aria-label="Loading application">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-teal-600 border-t-transparent mx-auto mb-4" />
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-teal-600 border-t-transparent mx-auto mb-4" aria-hidden="true" />
           <p className="text-ink font-medium">Loading...</p>
         </div>
       </div>
@@ -262,7 +290,7 @@ function BeatStreetApp() {
   if (!attendee) {
     return (
       <div className="h-full w-full flex items-center justify-center bg-cream">
-        <div className="max-w-md w-full mx-4 bg-paper rounded-2xl shadow-xl p-8 text-center">
+        <main id="main-content" className="max-w-md w-full mx-4 bg-paper rounded-2xl shadow-xl p-8 text-center" role="main">
           {/* Logo */}
           <div className="mb-6">
             <h1 className="font-display text-4xl text-ink mb-2">Beat Street</h1>
@@ -276,7 +304,11 @@ function BeatStreetApp() {
 
           {/* Error message */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 text-sm">
+            <div
+              className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 text-sm"
+              role="alert"
+              aria-live="assertive"
+            >
               {error}
             </div>
           )}
@@ -286,27 +318,28 @@ function BeatStreetApp() {
             onClick={handleSignIn}
             disabled={verifying}
             className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+            aria-describedby="sign-in-help"
           >
             {verifying ? (
               <>
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
-                Verifying registration...
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" aria-hidden="true" />
+                <span>Verifying registration...</span>
               </>
             ) : (
               <>
-                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
                   <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                   <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                   <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                   <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                 </svg>
-                Sign in with Google
+                <span>Sign in with Google</span>
               </>
             )}
           </button>
 
           {/* Help text */}
-          <p className="mt-6 text-sm text-ink/60">
+          <p id="sign-in-help" className="mt-6 text-sm text-ink/60">
             Use the same Google account you registered with for CJS2026.
           </p>
 
@@ -322,7 +355,7 @@ function BeatStreetApp() {
               Get your ticket
             </a>
           </p>
-        </div>
+        </main>
       </div>
     );
   }
@@ -344,37 +377,67 @@ function BeatStreetApp() {
   // Verified attendee - show the app
   return (
     <div className="h-full w-full relative bg-cream">
+      {/* Skip links for keyboard navigation */}
+      <SkipLinks
+        links={[
+          { targetId: 'main-content', label: 'Skip to main content' },
+          { targetId: 'navigation', label: 'Skip to navigation' },
+        ]}
+      />
+
+      {/* Screen reader announcements for offline status */}
+      <Announcer politeness="polite">
+        {!isOnline ? 'You are currently offline. Some features may be limited.' : ''}
+      </Announcer>
+
       {/* Offline indicator */}
       {!isOnline && (
-        <div className="absolute top-0 left-0 right-0 bg-yellow-500 text-white text-center py-1 z-50 text-sm">
+        <div
+          className="absolute top-0 left-0 right-0 bg-yellow-500 text-white text-center py-1 z-50 text-sm"
+          role="alert"
+          aria-live="polite"
+        >
           You're offline. Some features may be limited.
         </div>
       )}
 
-      {/* Desktop controls (hidden on mobile, TouchUI handles it there) */}
+      {/* Desktop navigation buttons (hidden on mobile, TouchUI handles it there) */}
       {!isMobile && (
-        <div className="absolute top-4 right-4 z-40 flex gap-2">
+        <nav id="navigation" className="absolute top-4 right-4 z-40 flex gap-2" aria-label="Main navigation">
+          <NotificationBell onViewAll={() => setShowNotificationsPanel(true)} />
           <button
             onClick={() => setShowLeaderboardPanel(true)}
-            className="w-10 h-10 bg-paper/90 backdrop-blur-sm rounded-full shadow-md flex items-center justify-center hover:bg-paper transition-colors focus:outline-none focus:ring-2 focus:ring-teal-600"
+            className="w-10 h-10 bg-paper/90 backdrop-blur-sm rounded-full shadow-md flex items-center justify-center hover:bg-paper transition-colors focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2"
             aria-label="Open leaderboard"
+            aria-haspopup="dialog"
           >
-            <Trophy className="w-5 h-5 text-teal-600" />
+            <Trophy className="w-5 h-5 text-teal-600" aria-hidden="true" />
+          </button>
+          <button
+            onClick={() => setShowAchievementsPanel(true)}
+            className="w-10 h-10 bg-paper/90 backdrop-blur-sm rounded-full shadow-md flex items-center justify-center hover:bg-paper transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+            aria-label="Open achievements"
+            aria-haspopup="dialog"
+          >
+            <Trophy className="w-5 h-5 text-amber-600" aria-hidden="true" />
           </button>
           <button
             onClick={() => setShowSettingsPanel(true)}
-            className="w-10 h-10 bg-paper/90 backdrop-blur-sm rounded-full shadow-md flex items-center justify-center hover:bg-paper transition-colors focus:outline-none focus:ring-2 focus:ring-teal-600"
+            className="w-10 h-10 bg-paper/90 backdrop-blur-sm rounded-full shadow-md flex items-center justify-center hover:bg-paper transition-colors focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2"
             aria-label="Open settings"
+            aria-haspopup="dialog"
           >
-            <Settings className="w-5 h-5 text-ink" />
+            <Settings className="w-5 h-5 text-ink" aria-hidden="true" />
           </button>
-        </div>
+        </nav>
       )}
 
       {/* Main game view */}
-      <Suspense fallback={<LoadingSpinner />}>
-        <GameContainer />
-      </Suspense>
+      <main id="main-content" className="h-full w-full" role="main" aria-label="Interactive conference map">
+        <Suspense fallback={<LoadingSpinner />}>
+          <GameContainer />
+        </Suspense>
+      </main>
 
       {/* UI Overlays */}
       <Suspense fallback={null}>
@@ -407,6 +470,8 @@ function BeatStreetApp() {
           onVenueChange={handleVenueChange}
         />
       </Suspense>
+
+      {/* Leaderboard Panel */}
       <Suspense fallback={null}>
         <LeaderboardPanel
           isOpen={showLeaderboardPanel}
@@ -416,6 +481,32 @@ function BeatStreetApp() {
           photoURL={attendee.photoURL}
         />
       </Suspense>
+
+      {/* Achievement Panel */}
+      <Suspense fallback={null}>
+        <AchievementPanel
+          isOpen={showAchievementsPanel}
+          onClose={() => setShowAchievementsPanel(false)}
+          uid={attendee.uid}
+          displayName={attendee.displayName}
+        />
+      </Suspense>
+
+      {/* Achievement Toast Notifications */}
+      <Suspense fallback={null}>
+        <AchievementToast position="top-right" duration={6000} />
+      </Suspense>
+
+      {/* Notification Panel */}
+      <Suspense fallback={null}>
+        <NotificationPanel
+          isOpen={showNotificationsPanel}
+          onClose={() => setShowNotificationsPanel(false)}
+        />
+      </Suspense>
+
+      {/* Notification Toast (session reminders, announcements) */}
+      <NotificationToast />
     </div>
   );
 }

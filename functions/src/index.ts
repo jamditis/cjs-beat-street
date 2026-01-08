@@ -1,15 +1,52 @@
 /**
  * Firebase Cloud Functions for Beat Street
  * Cross-project authentication with CJS2026
+ * Sponsor analytics and reporting
  */
 
 import {onRequest} from "firebase-functions/v2/https";
 import {defineSecret} from "firebase-functions/params";
 import {initializeApp, cert, App, getApps} from "firebase-admin/app";
 import {getAuth} from "firebase-admin/auth";
-import {getFirestore, FieldValue} from "firebase-admin/firestore";
+import {getFirestore, FieldValue, Timestamp} from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 import {pittsburghPOIs} from "./pittsburgh-pois.js";
+
+// Analytics types (duplicated here since functions has separate build)
+interface SponsorMetrics {
+  uniqueVisitors: number;
+  totalVisits: number;
+  averageTimeSpent: number;
+  totalTimeSpent: number;
+  navigationRequests: number;
+  peakConcurrentVisitors: number;
+}
+
+interface HourlyMetric {
+  hour: number;
+  date: string;
+  visits: number;
+  uniqueVisitors: number;
+}
+
+interface DailyMetric {
+  date: string;
+  visits: number;
+  uniqueVisitors: number;
+  averageTimeSpent: number;
+}
+
+interface SponsorReportData {
+  sponsorId: string;
+  sponsorName: string;
+  dateRange: {
+    start: Date;
+    end: Date;
+  };
+  metrics: SponsorMetrics;
+  hourlyBreakdown: HourlyMetric[];
+  dailyBreakdown: DailyMetric[];
+}
 
 // Define the secret (this tells Firebase to inject it at runtime)
 const cjs2026ServiceAccountSecret = defineSecret("CJS2026_SERVICE_ACCOUNT");
@@ -334,6 +371,298 @@ export const seedPOIs = onRequest({
     res.status(500).json({
       success: false,
       error: "Seeding failed. Check function logs.",
+    });
+  }
+});
+
+/**
+ * Generate sponsor analytics report
+ *
+ * This function aggregates analytics data for a specific sponsor
+ * to provide ROI metrics for sponsor reporting.
+ *
+ * Features:
+ * - Unique visitors (by anonymous session ID)
+ * - Total booth visits
+ * - Average time spent at booth
+ * - Peak hours analysis
+ * - Daily breakdown for trend analysis
+ * - Export as JSON or CSV
+ *
+ * Usage:
+ *   POST /generateSponsorReport
+ *   {
+ *     "adminSecret": "YOUR_SECRET",
+ *     "sponsorId": "sponsor-123",
+ *     "startDate": "2026-06-08",
+ *     "endDate": "2026-06-09",
+ *     "format": "json" | "csv"
+ *   }
+ *
+ * Returns:
+ *   - success: boolean
+ *   - report: SponsorReportData (if format=json)
+ *   - csv: string (if format=csv)
+ */
+export const generateSponsorReport = onRequest({
+  cors: true,
+  maxInstances: 10,
+  region: "us-central1",
+}, async (req, res) => {
+  if (req.method !== "POST") {
+    res.status(405).json({
+      success: false,
+      error: "Method not allowed. Use POST.",
+    });
+    return;
+  }
+
+  try {
+    const {
+      adminSecret,
+      sponsorId,
+      startDate,
+      endDate,
+      format = "json",
+    } = req.body;
+
+    // Validate admin secret
+    const expectedSecret = process.env.ADMIN_SECRET || "dev-seed-secret";
+    if (adminSecret !== expectedSecret) {
+      logger.warn("Invalid admin secret for generateSponsorReport");
+      res.status(403).json({
+        success: false,
+        error: "Invalid admin secret",
+      });
+      return;
+    }
+
+    // Validate required fields
+    if (!sponsorId || !startDate || !endDate) {
+      res.status(400).json({
+        success: false,
+        error: "Missing required fields: sponsorId, startDate, endDate",
+      });
+      return;
+    }
+
+    // Parse dates
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999); // Include full end day
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      res.status(400).json({
+        success: false,
+        error: "Invalid date format. Use YYYY-MM-DD.",
+      });
+      return;
+    }
+
+    logger.info(`Generating sponsor report for ${sponsorId}`, {
+      startDate,
+      endDate,
+      format,
+    });
+
+    // Query analytics events for this sponsor
+    const eventsQuery = await localDb
+      .collection("analytics_events")
+      .where("sponsorId", "==", sponsorId)
+      .where("timestamp", ">=", Timestamp.fromDate(start))
+      .where("timestamp", "<=", Timestamp.fromDate(end))
+      .orderBy("timestamp", "asc")
+      .get();
+
+    logger.info(`Found ${eventsQuery.size} events for sponsor ${sponsorId}`);
+
+    // Get sponsor name from POIs
+    const sponsorPOI = await localDb
+      .collection("poi")
+      .where("metadata.sponsorId", "==", sponsorId)
+      .limit(1)
+      .get();
+
+    const sponsorName = sponsorPOI.empty
+      ? sponsorId
+      : sponsorPOI.docs[0].data().name || sponsorId;
+
+    // Process events
+    const sessions = new Set<string>();
+    const dailyData = new Map<string, {
+      visits: number;
+      sessions: Set<string>;
+      totalDuration: number;
+      durationCount: number;
+    }>();
+    const hourlyData = new Map<string, {
+      visits: number;
+      sessions: Set<string>;
+    }>();
+
+    let totalDuration = 0;
+    let durationCount = 0;
+    let navigationRequests = 0;
+
+    eventsQuery.docs.forEach((doc) => {
+      const data = doc.data();
+      const sessionId = data.sessionId as string;
+      const timestamp = (data.timestamp as Timestamp).toDate();
+      const eventType = data.eventType as string;
+      const properties = data.properties as Record<string, unknown>;
+
+      // Track unique sessions
+      sessions.add(sessionId);
+
+      // Daily aggregation
+      const dateKey = timestamp.toISOString().split("T")[0];
+      if (!dailyData.has(dateKey)) {
+        dailyData.set(dateKey, {
+          visits: 0,
+          sessions: new Set(),
+          totalDuration: 0,
+          durationCount: 0,
+        });
+      }
+      const daily = dailyData.get(dateKey)!;
+      daily.visits++;
+      daily.sessions.add(sessionId);
+
+      // Hourly aggregation
+      const hour = timestamp.getHours();
+      const hourKey = `${dateKey}-${hour}`;
+      if (!hourlyData.has(hourKey)) {
+        hourlyData.set(hourKey, {
+          visits: 0,
+          sessions: new Set(),
+        });
+      }
+      const hourly = hourlyData.get(hourKey)!;
+      hourly.visits++;
+      hourly.sessions.add(sessionId);
+
+      // Track duration (from exit events)
+      if (properties.duration && typeof properties.duration === "number") {
+        const duration = properties.duration / 1000; // Convert to seconds
+        totalDuration += duration;
+        durationCount++;
+        daily.totalDuration += duration;
+        daily.durationCount++;
+      }
+
+      // Track navigation requests
+      if (eventType === "navigation_request") {
+        navigationRequests++;
+      }
+    });
+
+    // Calculate metrics
+    const metrics: SponsorMetrics = {
+      uniqueVisitors: sessions.size,
+      totalVisits: eventsQuery.size,
+      averageTimeSpent: durationCount > 0 ? totalDuration / durationCount : 0,
+      totalTimeSpent: totalDuration,
+      navigationRequests,
+      peakConcurrentVisitors: Math.max(
+        ...Array.from(hourlyData.values()).map((h) => h.sessions.size),
+        0
+      ),
+    };
+
+    // Build hourly breakdown
+    const hourlyBreakdown: HourlyMetric[] = Array.from(hourlyData.entries())
+      .map(([key, data]) => {
+        const [date, hourStr] = key.split("-");
+        const hour = parseInt(hourStr, 10);
+        return {
+          hour,
+          date: `${date.split("-").slice(0, 3).join("-")}`,
+          visits: data.visits,
+          uniqueVisitors: data.sessions.size,
+        };
+      })
+      .sort((a, b) => {
+        if (a.date !== b.date) return a.date.localeCompare(b.date);
+        return a.hour - b.hour;
+      });
+
+    // Build daily breakdown
+    const dailyBreakdown: DailyMetric[] = Array.from(dailyData.entries())
+      .map(([date, data]) => ({
+        date,
+        visits: data.visits,
+        uniqueVisitors: data.sessions.size,
+        averageTimeSpent: data.durationCount > 0
+          ? data.totalDuration / data.durationCount
+          : 0,
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    // Build report
+    const report: SponsorReportData = {
+      sponsorId,
+      sponsorName,
+      dateRange: {
+        start,
+        end,
+      },
+      metrics,
+      hourlyBreakdown,
+      dailyBreakdown,
+    };
+
+    // Return based on format
+    if (format === "csv") {
+      const csvLines: string[] = [];
+
+      // Summary section
+      csvLines.push("Sponsor Analytics Report");
+      csvLines.push(`Sponsor,${sponsorName}`);
+      csvLines.push(`Date Range,${startDate} to ${endDate}`);
+      csvLines.push("");
+
+      // Metrics section
+      csvLines.push("Summary Metrics");
+      csvLines.push(`Unique Visitors,${metrics.uniqueVisitors}`);
+      csvLines.push(`Total Visits,${metrics.totalVisits}`);
+      csvLines.push(`Average Time Spent (seconds),${metrics.averageTimeSpent.toFixed(1)}`);
+      csvLines.push(`Total Time Spent (seconds),${metrics.totalTimeSpent.toFixed(1)}`);
+      csvLines.push(`Navigation Requests,${metrics.navigationRequests}`);
+      csvLines.push(`Peak Concurrent Visitors,${metrics.peakConcurrentVisitors}`);
+      csvLines.push("");
+
+      // Daily breakdown
+      csvLines.push("Daily Breakdown");
+      csvLines.push("Date,Visits,Unique Visitors,Avg Time Spent (s)");
+      dailyBreakdown.forEach((d) => {
+        csvLines.push(`${d.date},${d.visits},${d.uniqueVisitors},${d.averageTimeSpent.toFixed(1)}`);
+      });
+      csvLines.push("");
+
+      // Hourly breakdown
+      csvLines.push("Hourly Breakdown");
+      csvLines.push("Date,Hour,Visits,Unique Visitors");
+      hourlyBreakdown.forEach((h) => {
+        csvLines.push(`${h.date},${h.hour},${h.visits},${h.uniqueVisitors}`);
+      });
+
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="sponsor-report-${sponsorId}-${startDate}-${endDate}.csv"`
+      );
+      res.status(200).send(csvLines.join("\n"));
+    } else {
+      res.status(200).json({
+        success: true,
+        report,
+      });
+    }
+  } catch (error: unknown) {
+    logger.error("Report generation error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Report generation failed. Check function logs.",
     });
   }
 });

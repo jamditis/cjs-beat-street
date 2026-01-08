@@ -21,6 +21,12 @@ import { POIPanelSkeleton } from './Skeleton';
 import { triggerHaptic } from '../hooks/useHaptic';
 import { useSchedule } from '../hooks/useSchedule';
 import { SchedulePanel } from './SchedulePanel';
+import {
+  trackPOIView,
+  trackPOIClose,
+  trackNavigationRequest,
+  trackSponsorBoothVisit,
+} from '../services/analytics';
 
 interface POIEventData {
   poiId: string;
@@ -40,6 +46,7 @@ export function POIPanel() {
   const [scheduleRoom, setScheduleRoom] = useState<string | undefined>(undefined);
   const [scheduleVenueName, setScheduleVenueName] = useState<string | undefined>(undefined);
   const panelRef = useRef<HTMLDivElement>(null);
+  const viewStartTimeRef = useRef<number | null>(null);
 
   // Get schedule data for showing session counts
   const { getSessionsByRoom } = useSchedule();
@@ -63,9 +70,23 @@ export function POIPanel() {
 
   const handleClose = useCallback(() => {
     triggerHaptic('tap');
+
+    // Track POI close with duration
+    if (selectedPOI && viewStartTimeRef.current) {
+      const duration = Date.now() - viewStartTimeRef.current;
+      trackPOIClose(selectedPOI.poiId, {
+        poiType: selectedPOI.type,
+        poiName: selectedPOI.data.name,
+        duration,
+        venueId: selectedPOI.data.venueId,
+        zone: selectedPOI.data.position?.zone,
+      });
+      viewStartTimeRef.current = null;
+    }
+
     setSelectedPOI(null);
     dragY.set(0);
-  }, [dragY]);
+  }, [dragY, selectedPOI]);
 
   // Handle opening schedule panel
   const handleOpenSchedule = useCallback((room?: string, venueName?: string) => {
@@ -102,12 +123,26 @@ export function POIPanel() {
 
       if (shouldDismiss) {
         triggerHaptic('tap');
+
+        // Track POI close with duration
+        if (selectedPOI && viewStartTimeRef.current) {
+          const duration = Date.now() - viewStartTimeRef.current;
+          trackPOIClose(selectedPOI.poiId, {
+            poiType: selectedPOI.type,
+            poiName: selectedPOI.data.name,
+            duration,
+            venueId: selectedPOI.data.venueId,
+            zone: selectedPOI.data.position?.zone,
+          });
+          viewStartTimeRef.current = null;
+        }
+
         setSelectedPOI(null);
       }
 
       dragY.set(0);
     },
-    [dragY]
+    [dragY, selectedPOI]
   );
 
   useEffect(() => {
@@ -117,8 +152,31 @@ export function POIPanel() {
 
       // Simulate loading for demonstration (in production, this would be actual data fetching)
       setTimeout(() => {
-        setSelectedPOI(poi as POIEventData);
+        const poiData = poi as POIEventData;
+        setSelectedPOI(poiData);
         setIsLoading(false);
+
+        // Track POI view
+        viewStartTimeRef.current = Date.now();
+        trackPOIView({
+          poiId: poiData.poiId,
+          poiType: poiData.type,
+          poiName: poiData.data.name,
+          venueId: poiData.data.venueId,
+          zone: poiData.data.position?.zone,
+          floor: poiData.data.floor,
+        });
+
+        // Track sponsor booth visit specifically
+        if (poiData.type === POIType.SPONSOR) {
+          const sponsorData = poiData.data as SponsorPOI;
+          trackSponsorBoothVisit({
+            sponsorId: poiData.poiId,
+            sponsorName: sponsorData.metadata?.company || poiData.data.name,
+            boothId: sponsorData.metadata?.booth,
+            actions: ['view'],
+          });
+        }
       }, 200);
     });
 
@@ -166,6 +224,14 @@ export function POIPanel() {
   const handleNavigate = () => {
     if (selectedPOI) {
       triggerHaptic('success');
+
+      // Track navigation request
+      trackNavigationRequest(selectedPOI.poiId, selectedPOI.data.name, {
+        poiType: selectedPOI.type,
+        venueId: selectedPOI.data.venueId,
+        zone: selectedPOI.data.position?.zone,
+      });
+
       // Emit navigation event for the game to handle
       eventBus.emit('navigate-to-poi', {
         poiId: selectedPOI.poiId,

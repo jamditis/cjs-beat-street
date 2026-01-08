@@ -14,10 +14,20 @@ import {
   Users,
   Sparkles,
   Building2,
+  Bell,
+  Check,
 } from 'lucide-react';
 import { SessionWithStatus, SessionTrack } from '../types/schedule';
 import { useSchedule } from '../hooks/useSchedule';
+import { useNotifications } from '../hooks/useNotifications';
 import { eventBus } from '../lib/EventBus';
+import {
+  trackSessionCalendarAdd,
+  trackNavigationRequest,
+  trackPanelOpen,
+  trackPanelClose,
+} from '../services/analytics';
+import { useKeyboardNav } from '../hooks/useKeyboardNav';
 
 interface SchedulePanelProps {
   /** Whether the panel is visible */
@@ -129,18 +139,34 @@ function SessionCard({
   session,
   expanded,
   onToggle,
+  hasReminder,
+  onToggleReminder,
 }: {
   session: SessionWithStatus;
   expanded: boolean;
   onToggle: () => void;
+  hasReminder: boolean;
+  onToggleReminder: (session: SessionWithStatus) => void;
 }) {
   const trackInfo = getTrackInfo(session.track);
   const isLive = session.status === 'live';
   const isPast = session.status === 'past';
+  const isUpcoming = session.status === 'upcoming';
 
   const handleAddToCalendar = (e: React.MouseEvent) => {
     e.stopPropagation();
     window.open(generateCalendarUrl(session), '_blank', 'noopener,noreferrer');
+
+    // Track calendar add
+    trackSessionCalendarAdd({
+      sessionId: session.id,
+      sessionTitle: session.title,
+      sessionTrack: session.track,
+      speaker: session.speaker,
+      room: session.room,
+      action: 'calendar_add',
+    });
+
     eventBus.emit('schedule-event', {
       sessionId: session.id,
       session,
@@ -150,10 +176,22 @@ function SessionCard({
 
   const handleNavigate = (e: React.MouseEvent) => {
     e.stopPropagation();
+
+    // Track navigation request
+    trackNavigationRequest(session.id, session.title, {
+      room: session.room,
+      sessionTrack: session.track,
+    });
+
     eventBus.emit('schedule-navigate-to-session', {
       sessionId: session.id,
       room: session.room,
     });
+  };
+
+  const handleToggleReminder = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onToggleReminder(session);
   };
 
   return (
@@ -174,6 +212,8 @@ function SessionCard({
         onClick={onToggle}
         className="w-full text-left p-4 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-600 rounded-lg"
         aria-expanded={expanded}
+        aria-controls={`session-details-${session.id}`}
+        aria-label={`${session.title}. ${formatTime(session.startTime)} to ${formatTime(session.endTime)}. ${isLive ? 'Happening now.' : ''} ${trackInfo.label}. ${expanded ? 'Collapse details' : 'Expand details'}`}
       >
         {/* Header row */}
         <div className="flex items-start justify-between gap-2">
@@ -233,11 +273,14 @@ function SessionCard({
       <AnimatePresence>
         {expanded && (
           <motion.div
+            id={`session-details-${session.id}`}
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
+            role="region"
+            aria-label={`Details for ${session.title}`}
           >
             <div className="px-4 pb-4 space-y-3 border-t border-ink/5 pt-3">
               {/* Description */}
@@ -287,23 +330,50 @@ function SessionCard({
 
               {/* Actions */}
               {!isPast && !session.isBreak && (
-                <div className="flex gap-2 pt-2">
-                  <button
-                    onClick={handleAddToCalendar}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-cream hover:bg-parchment rounded-lg text-sm font-medium text-ink transition-colors focus:outline-none focus:ring-2 focus:ring-teal-600"
-                  >
-                    <CalendarPlus className="w-4 h-4" />
-                    Add to Calendar
-                  </button>
-                  {session.room && (
+                <div className="space-y-2 pt-2">
+                  {/* Remind me button - only for upcoming sessions */}
+                  {isUpcoming && (
                     <button
-                      onClick={handleNavigate}
-                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-teal-600 hover:bg-teal-700 rounded-lg text-sm font-medium text-white transition-colors focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2"
+                      onClick={handleToggleReminder}
+                      className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-teal-600 ${
+                        hasReminder
+                          ? 'bg-teal-600 text-white hover:bg-teal-700'
+                          : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'
+                      }`}
                     >
-                      <MapPin className="w-4 h-4" />
-                      Navigate
+                      {hasReminder ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          Reminder Set
+                        </>
+                      ) : (
+                        <>
+                          <Bell className="w-4 h-4" />
+                          Remind Me (15 min before)
+                        </>
+                      )}
                     </button>
                   )}
+
+                  {/* Calendar and Navigate buttons */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleAddToCalendar}
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-cream hover:bg-parchment rounded-lg text-sm font-medium text-ink transition-colors focus:outline-none focus:ring-2 focus:ring-teal-600"
+                    >
+                      <CalendarPlus className="w-4 h-4" />
+                      Add to Calendar
+                    </button>
+                    {session.room && (
+                      <button
+                        onClick={handleNavigate}
+                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-teal-600 hover:bg-teal-700 rounded-lg text-sm font-medium text-white transition-colors focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2"
+                      >
+                        <MapPin className="w-4 h-4" />
+                        Navigate
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -327,6 +397,7 @@ export function SchedulePanel({
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const panelOpenTimeRef = useRef<number | null>(null);
 
   const {
     liveSessions,
@@ -334,6 +405,37 @@ export function SchedulePanel({
     pastSessions,
     currentTime,
   } = useSchedule();
+
+  const {
+    hasReminder,
+    scheduleReminder,
+    cancelReminder,
+    preferences,
+  } = useNotifications();
+
+  // Track panel open/close for analytics
+  useEffect(() => {
+    if (isOpen) {
+      panelOpenTimeRef.current = Date.now();
+      trackPanelOpen('schedule', { room, venueName });
+    } else if (panelOpenTimeRef.current) {
+      const duration = Date.now() - panelOpenTimeRef.current;
+      trackPanelClose('schedule', duration, { room, venueName });
+      panelOpenTimeRef.current = null;
+    }
+  }, [isOpen, room, venueName]);
+
+  // Toggle reminder for a session
+  const handleToggleReminder = useCallback(
+    (session: SessionWithStatus) => {
+      if (hasReminder(session.id)) {
+        cancelReminder(session.id);
+      } else {
+        scheduleReminder(session, preferences.defaultReminderMinutes);
+      }
+    },
+    [hasReminder, cancelReminder, scheduleReminder, preferences.defaultReminderMinutes]
+  );
 
   // Filter sessions by room if provided
   const filteredSessions = room
@@ -366,23 +468,20 @@ export function SchedulePanel({
     }
   })();
 
-  // Handle keyboard navigation
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    },
-    [onClose]
-  );
+  // Keyboard navigation with focus trap
+  useKeyboardNav({
+    onEscape: onClose,
+    trapFocus: true,
+    containerRef: panelRef,
+    enabled: isOpen,
+  });
 
+  // Focus close button when panel opens
   useEffect(() => {
     if (isOpen) {
       closeButtonRef.current?.focus();
-      document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
     }
-  }, [isOpen, handleKeyDown]);
+  }, [isOpen]);
 
   // Auto-expand the first live session
   useEffect(() => {
@@ -450,7 +549,11 @@ export function SchedulePanel({
             </div>
 
             {/* Tab filters */}
-            <div className="flex gap-1 mt-4 bg-cream rounded-lg p-1">
+            <div
+              className="flex gap-1 mt-4 bg-cream rounded-lg p-1"
+              role="tablist"
+              aria-label="Filter sessions by time"
+            >
               {[
                 { id: 'now' as const, label: 'Now', count: filteredSessions.live.length },
                 { id: 'upcoming' as const, label: 'Upcoming', count: filteredSessions.upcoming.length },
@@ -458,6 +561,9 @@ export function SchedulePanel({
               ].map((tab) => (
                 <button
                   key={tab.id}
+                  role="tab"
+                  aria-selected={activeTab === tab.id}
+                  aria-controls="session-list"
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-600 ${
                     activeTab === tab.id
@@ -473,6 +579,7 @@ export function SchedulePanel({
                           ? 'bg-teal-600 text-white'
                           : 'bg-ink/10 text-ink/60'
                       }`}
+                      aria-label={`${tab.count} ${tab.label.toLowerCase()} sessions`}
                     >
                       {tab.count}
                     </span>
@@ -483,7 +590,12 @@ export function SchedulePanel({
           </div>
 
           {/* Session list */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <div
+            id="session-list"
+            role="tabpanel"
+            aria-label={`${activeTab === 'now' ? 'Currently happening' : activeTab === 'upcoming' ? 'Upcoming' : 'All'} sessions`}
+            className="flex-1 overflow-y-auto p-4 space-y-3"
+          >
             {displaySessions.length === 0 ? (
               <div className="text-center py-12 text-ink/50">
                 <Calendar className="w-12 h-12 mx-auto mb-3 opacity-30" />
@@ -508,6 +620,8 @@ export function SchedulePanel({
                         expandedId === session.id ? null : session.id
                       )
                     }
+                    hasReminder={hasReminder(session.id)}
+                    onToggleReminder={handleToggleReminder}
                   />
                 ))}
               </AnimatePresence>

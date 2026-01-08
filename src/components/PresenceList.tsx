@@ -1,10 +1,11 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { motion, AnimatePresence, PanInfo, useMotionValue, useTransform } from 'framer-motion';
 import { Users, ChevronDown, ChevronUp, Hand, MapPin, RefreshCw } from 'lucide-react';
 import { eventBus, UserPresence } from '../lib/EventBus';
 import { useAttendees } from '../hooks/useAttendees';
 import { AttendeeListSkeleton } from './Skeleton';
 import { triggerHaptic } from '../hooks/useHaptic';
+import { Announcer } from './VisuallyHidden';
 
 // Swipe threshold for dismissing the panel
 const SWIPE_THRESHOLD = 100;
@@ -16,6 +17,9 @@ export function PresenceList() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [focusedUserIndex, setFocusedUserIndex] = useState(-1);
+  const [announcement, setAnnouncement] = useState('');
+  const listRef = useRef<HTMLDivElement>(null);
   const { waveAt, findOnMap } = useAttendees();
 
   // Swipe-to-dismiss state for mobile
@@ -38,8 +42,20 @@ export function PresenceList() {
   useEffect(() => {
     const unsubscribe = eventBus.on('presence-update', (data: unknown) => {
       const presenceData = data as { users: UserPresence[] };
+      const previousCount = users.length;
+      const newCount = presenceData.users.length;
       setUsers(presenceData.users);
       setIsLoading(false);
+
+      // Announce changes for screen readers
+      if (previousCount !== newCount && previousCount > 0) {
+        const diff = newCount - previousCount;
+        if (diff > 0) {
+          setAnnouncement(`${diff} new ${diff === 1 ? 'attendee' : 'attendees'} nearby`);
+        } else if (diff < 0) {
+          setAnnouncement(`${Math.abs(diff)} ${Math.abs(diff) === 1 ? 'attendee' : 'attendees'} left the area`);
+        }
+      }
     });
 
     // Listen for refresh requests from TouchUI
@@ -57,7 +73,7 @@ export function PresenceList() {
       unsubscribeRefresh();
       clearTimeout(loadTimer);
     };
-  }, []);
+  }, [users.length]);
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -120,7 +136,47 @@ export function PresenceList() {
   const handleToggleExpand = () => {
     triggerHaptic('tap');
     setIsExpanded(!isExpanded);
+    setFocusedUserIndex(-1);
   };
+
+  // Keyboard navigation for the user list
+  const handleListKeyDown = useCallback((event: React.KeyboardEvent) => {
+    if (!isExpanded || users.length === 0) return;
+
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        setFocusedUserIndex((prev) =>
+          prev < users.length - 1 ? prev + 1 : 0
+        );
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        setFocusedUserIndex((prev) =>
+          prev > 0 ? prev - 1 : users.length - 1
+        );
+        break;
+      case 'Home':
+        event.preventDefault();
+        setFocusedUserIndex(0);
+        break;
+      case 'End':
+        event.preventDefault();
+        setFocusedUserIndex(users.length - 1);
+        break;
+      case 'Enter':
+      case ' ':
+        event.preventDefault();
+        if (focusedUserIndex >= 0 && focusedUserIndex < users.length) {
+          handleUserClick(users[focusedUserIndex].uid);
+        }
+        break;
+      case 'Escape':
+        event.preventDefault();
+        setIsExpanded(false);
+        break;
+    }
+  }, [isExpanded, users, focusedUserIndex]);
 
   const getInitials = (name: string): string => {
     const parts = name.trim().split(/\s+/);
@@ -142,15 +198,20 @@ export function PresenceList() {
     }
   };
 
-  const renderUser = (user: UserPresence) => (
-    <motion.div
+  const renderUser = (user: UserPresence, index: number) => {
+    const isFocused = focusedUserIndex === index;
+    return (
+    <motion.button
       key={user.uid}
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 20 }}
-      className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-cream/50 active:bg-cream transition-colors cursor-pointer group touch-manipulation"
+      className={`w-full flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-cream/50 active:bg-cream transition-colors cursor-pointer group touch-manipulation text-left focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-inset ${isFocused ? 'bg-cream/50' : ''}`}
       onClick={() => handleUserClick(user.uid)}
       style={{ touchAction: 'manipulation' }}
+      tabIndex={isFocused ? 0 : -1}
+      aria-label={`${user.displayName}, ${user.status}, in ${user.zone}`}
+      aria-current={isFocused ? 'true' : undefined}
     >
       {/* Avatar */}
       <div className="relative flex-shrink-0">
@@ -171,39 +232,50 @@ export function PresenceList() {
       </div>
 
       {/* Quick Actions - always visible on mobile, hover on desktop */}
-      <div className={`flex items-center gap-1 ${isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
+      <div className={`flex items-center gap-1 ${isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100'} transition-opacity`}>
         <button
           onClick={(e) => handleWave(user.uid, e)}
           onTouchEnd={(e) => handleWave(user.uid, e)}
-          className="w-10 h-10 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-teal-100 active:bg-teal-200 text-teal-600 transition-colors touch-manipulation"
+          className="w-10 h-10 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-teal-100 active:bg-teal-200 text-teal-600 transition-colors touch-manipulation focus:outline-none focus:ring-2 focus:ring-teal-600"
           aria-label={`Send wave to ${user.displayName}`}
           title="Send wave"
           style={{ touchAction: 'manipulation' }}
+          tabIndex={0}
         >
-          <Hand className="w-5 h-5" />
+          <Hand className="w-5 h-5" aria-hidden="true" />
         </button>
         <button
           onClick={(e) => handleFindOnMap(user.uid, e)}
           onTouchEnd={(e) => handleFindOnMap(user.uid, e)}
-          className="w-10 h-10 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-teal-100 active:bg-teal-200 text-teal-600 transition-colors touch-manipulation"
+          className="w-10 h-10 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-teal-100 active:bg-teal-200 text-teal-600 transition-colors touch-manipulation focus:outline-none focus:ring-2 focus:ring-teal-600"
           aria-label={`Find ${user.displayName} on map`}
           title="Find on map"
           style={{ touchAction: 'manipulation' }}
+          tabIndex={0}
         >
-          <MapPin className="w-5 h-5" />
+          <MapPin className="w-5 h-5" aria-hidden="true" />
         </button>
       </div>
-    </motion.div>
+    </motion.button>
   );
+  };
 
   const renderGroupedUsers = () => {
+    let globalIndex = 0;
     return zones.map((zone) => (
-      <div key={zone} className="mb-3 last:mb-0">
-        <h4 className="text-xs font-semibold text-ink/70 uppercase tracking-wide mb-2 px-2">
+      <div key={zone} className="mb-3 last:mb-0" role="group" aria-labelledby={`zone-${zone.replace(/\s+/g, '-').toLowerCase()}`}>
+        <h4
+          id={`zone-${zone.replace(/\s+/g, '-').toLowerCase()}`}
+          className="text-xs font-semibold text-ink/70 uppercase tracking-wide mb-2 px-2"
+        >
           {zone} ({usersByZone[zone].length})
         </h4>
-        <div className="space-y-1">
-          {usersByZone[zone].map((user) => renderUser(user))}
+        <div className="space-y-1" role="list">
+          {usersByZone[zone].map((user) => {
+            const element = renderUser(user, globalIndex);
+            globalIndex++;
+            return element;
+          })}
         </div>
       </div>
     ));
@@ -235,7 +307,7 @@ export function PresenceList() {
   }
 
   return (
-    <motion.div
+    <motion.aside
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       drag={isMobile && isExpanded ? 'y' : false}
@@ -244,23 +316,29 @@ export function PresenceList() {
       onDragEnd={handleDragEnd}
       style={isMobile && isExpanded ? { y: dragY, opacity: dragOpacity } : {}}
       className={`fixed ${isMobile ? 'bottom-0 left-0 right-0 rounded-t-xl' : 'bottom-4 right-4 rounded-xl max-w-xs w-full'} bg-paper shadow-lg z-40 overflow-hidden safe-area-bottom`}
+      aria-label="Nearby attendees"
+      aria-live="polite"
     >
+      {/* Screen reader announcements */}
+      <Announcer>{announcement}</Announcer>
+
       {/* Drag handle for mobile when expanded */}
       {isMobile && isExpanded && (
-        <div className="flex justify-center py-2 cursor-grab active:cursor-grabbing">
+        <div className="flex justify-center py-2 cursor-grab active:cursor-grabbing" aria-hidden="true">
           <div className="w-10 h-1 bg-ink/20 rounded-full" />
         </div>
       )}
 
       <button
         onClick={handleToggleExpand}
-        className="w-full px-4 py-3 flex items-center justify-between hover:bg-cream active:bg-cream/70 transition-colors touch-manipulation"
+        className="w-full px-4 py-3 flex items-center justify-between hover:bg-cream active:bg-cream/70 transition-colors touch-manipulation focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-600"
         style={{ touchAction: 'manipulation' }}
         aria-expanded={isExpanded}
         aria-controls="presence-list-content"
+        aria-label={`${users.length} attendees nearby. ${isExpanded ? 'Collapse' : 'Expand'} list`}
       >
         <div className="flex items-center gap-2">
-          <Users className="w-5 h-5 text-teal-600" />
+          <Users className="w-5 h-5 text-teal-600" aria-hidden="true" />
           <span className="font-semibold text-ink">{users.length} nearby</span>
         </div>
         <div className="flex items-center gap-2">
@@ -270,17 +348,17 @@ export function PresenceList() {
               e.stopPropagation();
               handleRefresh();
             }}
-            className={`w-8 h-8 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-cream active:bg-cream/70 text-ink/60 transition-colors touch-manipulation ${isRefreshing ? 'animate-spin' : ''}`}
-            aria-label="Refresh presence list"
+            className={`w-8 h-8 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-cream active:bg-cream/70 text-ink/60 transition-colors touch-manipulation focus:outline-none focus:ring-2 focus:ring-teal-600 ${isRefreshing ? 'animate-spin' : ''}`}
+            aria-label={isRefreshing ? 'Refreshing presence list' : 'Refresh presence list'}
             disabled={isRefreshing}
             style={{ touchAction: 'manipulation' }}
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className="w-4 h-4" aria-hidden="true" />
           </button>
           {isExpanded ? (
-            <ChevronDown className="w-5 h-5 text-ink/60" />
+            <ChevronDown className="w-5 h-5 text-ink/60" aria-hidden="true" />
           ) : (
-            <ChevronUp className="w-5 h-5 text-ink/60" />
+            <ChevronUp className="w-5 h-5 text-ink/60" aria-hidden="true" />
           )}
         </div>
       </button>
@@ -293,6 +371,8 @@ export function PresenceList() {
             animate={{ height: 'auto' }}
             exit={{ height: 0 }}
             className="overflow-hidden"
+            role="region"
+            aria-label="Attendee list"
           >
             <div className="px-2 pb-3">
               {/* Group by zone toggle (if multiple zones) */}
@@ -303,8 +383,9 @@ export function PresenceList() {
                       triggerHaptic('selection');
                       setGroupByZone(!groupByZone);
                     }}
-                    className="text-xs text-teal-600 hover:text-teal-700 active:text-teal-800 font-medium py-1 touch-manipulation"
+                    className="text-xs text-teal-600 hover:text-teal-700 active:text-teal-800 font-medium py-1 touch-manipulation focus:outline-none focus:underline"
                     style={{ touchAction: 'manipulation' }}
+                    aria-pressed={groupByZone}
                   >
                     {groupByZone ? 'Show all' : 'Group by zone'}
                   </button>
@@ -312,17 +393,24 @@ export function PresenceList() {
               )}
 
               {/* User list */}
-              <div className={`${isMobile ? 'max-h-[50vh]' : 'max-h-80'} overflow-y-auto scroll-touch space-y-1`}>
+              <div
+                ref={listRef}
+                className={`${isMobile ? 'max-h-[50vh]' : 'max-h-80'} overflow-y-auto scroll-touch space-y-1`}
+                role="listbox"
+                aria-label="Nearby attendees"
+                onKeyDown={handleListKeyDown}
+                tabIndex={0}
+              >
                 {groupByZone && shouldGroupByZone ? (
                   renderGroupedUsers()
                 ) : (
-                  users.map((user) => renderUser(user))
+                  users.map((user, index) => renderUser(user, index))
                 )}
               </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </motion.aside>
   );
 }
