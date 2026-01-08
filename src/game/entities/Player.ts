@@ -36,21 +36,58 @@ export class Player {
     // Determine which texture to use: preloaded sprite or default player sprite
     const textureKey = config.spriteKey || 'player';
 
-    // Create shadow
-    this.shadow = this.scene.add.image(config.x, config.y, 'player-shadow');
+    // Debug: Check if texture exists
+    const textureExists = this.scene.textures.exists(textureKey);
+    const shadowExists = this.scene.textures.exists('player-shadow');
+    console.log(`[Player] Creating player at (${config.x}, ${config.y})`);
+    console.log(`[Player] Texture '${textureKey}' exists: ${textureExists}`);
+    console.log(`[Player] Shadow texture exists: ${shadowExists}`);
+
+    // Create shadow (with fallback if texture doesn't exist)
+    if (shadowExists) {
+      this.shadow = this.scene.add.image(config.x, config.y, 'player-shadow');
+    } else {
+      // Create a fallback shadow as a simple ellipse
+      const shadowGraphics = this.scene.add.graphics();
+      shadowGraphics.fillStyle(0x000000, 0.3);
+      shadowGraphics.fillEllipse(20, 8, 40, 16);
+      shadowGraphics.generateTexture('player-shadow-fallback', 40, 16);
+      shadowGraphics.destroy();
+      this.shadow = this.scene.add.image(config.x, config.y, 'player-shadow-fallback');
+      console.warn('[Player] Using fallback shadow');
+    }
     this.shadow.setDepth(0); // Shadows are always at the bottom
 
-    // Create the physics sprite
-    this.sprite = this.scene.physics.add.sprite(config.x, config.y, textureKey);
+    // Create the physics sprite (with fallback if texture doesn't exist)
+    if (textureExists) {
+      this.sprite = this.scene.physics.add.sprite(config.x, config.y, textureKey);
+    } else {
+      // Create a fallback player texture
+      const fallbackGraphics = this.scene.add.graphics();
+      fallbackGraphics.fillStyle(0x2A9D8F, 1); // teal
+      fallbackGraphics.fillRect(0, 16, 32, 32);
+      fallbackGraphics.fillStyle(0xF4A261, 1); // skin
+      fallbackGraphics.fillCircle(16, 10, 10);
+      fallbackGraphics.generateTexture('player-fallback', 32, 48);
+      fallbackGraphics.destroy();
+      this.sprite = this.scene.physics.add.sprite(config.x, config.y, 'player-fallback');
+      console.warn('[Player] Using fallback player texture');
+    }
     this.sprite.setCollideWorldBounds(true);
     this.sprite.setDamping(true);
     this.sprite.setDrag(0.8);
     this.sprite.setMaxVelocity(this.moveSpeed, this.moveSpeed);
     this.sprite.setDepth(10); // Player above most objects
 
+    // Debug: Log sprite dimensions
+    console.log(`[Player] Sprite size: ${this.sprite.width}x${this.sprite.height}, visible: ${this.sprite.visible}, alpha: ${this.sprite.alpha}`);
+
     // Start with idle animation facing south
     if (this.scene.anims.exists('player-idle-s')) {
       this.sprite.play('player-idle-s');
+      console.log('[Player] Playing idle animation');
+    } else {
+      console.warn('[Player] Idle animation not found');
     }
 
     // Create name tag

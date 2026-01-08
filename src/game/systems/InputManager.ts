@@ -29,6 +29,8 @@ export class InputManager {
 
     // Setup keyboard controls (works on desktop and mobile with keyboard)
     this.setupKeyboardControls();
+
+    console.log(`[InputManager] Initialized. isMobile: ${this.isMobile}, keyboard available: ${!!this.scene.input.keyboard}`);
   }
 
   private detectMobile(): boolean {
