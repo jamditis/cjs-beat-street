@@ -86,7 +86,10 @@ export function FloorSelector() {
     }
   }, [buildingInfo, currentFloor, handleFloorChange]);
 
-  if (!buildingInfo) return null;
+  // Defensive check - ensure buildingInfo and floors array exist
+  if (!buildingInfo || !buildingInfo.floors || !Array.isArray(buildingInfo.floors) || buildingInfo.floors.length === 0) {
+    return null;
+  }
 
   const minFloor = Math.min(...buildingInfo.floors);
   const maxFloor = Math.max(...buildingInfo.floors);

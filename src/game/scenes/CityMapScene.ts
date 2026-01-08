@@ -404,126 +404,17 @@ export class CityMapScene extends Phaser.Scene {
       }
     });
 
-    // Add decorative buildings around the map
-    this.createDecorativeBuildings();
+    // Decorative buildings disabled - causing visual issues
+    // this.createDecorativeBuildings();
   }
 
-  /**
-   * Create decorative buildings to fill out the cityscape
+  /*
+   * DISABLED: createDecorativeBuildings and createVegetation methods
+   * These methods were causing visual chaos with mispositioned sprites.
+   * Uncomment and fix when sprite positioning is resolved.
+   *
+   * See git history for original implementations.
    */
-  private createDecorativeBuildings(): void {
-    const decorativeSpots = [
-      // Downtown area buildings
-      { x: 150, y: 200, sprite: 'hotel', scale: 0.6 },
-      { x: 600, y: 150, sprite: 'cafe', scale: 0.5 },
-      { x: 700, y: 700, sprite: 'store', scale: 0.5 },
-      // Cultural district buildings
-      { x: 1100, y: 200, sprite: 'museum', scale: 0.6 },
-      { x: 1300, y: 400, sprite: 'theater', scale: 0.55 },
-      { x: 950, y: 650, sprite: 'library', scale: 0.5 },
-      // Waterfront area
-      { x: 1900, y: 300, sprite: 'restaurant', scale: 0.5 },
-      { x: 2100, y: 600, sprite: 'apartment', scale: 0.5 },
-      { x: 1750, y: 800, sprite: 'mall', scale: 0.55 },
-      // Additional buildings for density
-      { x: 200, y: 700, sprite: 'postoffice', scale: 0.5 },
-      { x: 1500, y: 200, sprite: 'school', scale: 0.5 },
-      { x: 2200, y: 1000, sprite: 'hospital', scale: 0.55 },
-      // Southern area
-      { x: 300, y: 1200, sprite: 'firestation', scale: 0.5 },
-      { x: 800, y: 1400, sprite: 'police', scale: 0.5 },
-      { x: 1200, y: 1100, sprite: 'cafe', scale: 0.45 },
-      { x: 1600, y: 1300, sprite: 'store', scale: 0.45 },
-      { x: 2000, y: 1500, sprite: 'hotel', scale: 0.55 },
-    ];
-
-    decorativeSpots.forEach(({ x, y, sprite, scale }) => {
-      if (this.textures.exists(sprite)) {
-        // Add shadow first
-        const building = this.add.image(x, y, sprite);
-        building.setScale(scale);
-        building.setDepth(3);
-
-        // Shadow ellipse
-        const shadowWidth = building.displayWidth * 0.8;
-        const shadow = this.add.ellipse(x, y + building.displayHeight * 0.4, shadowWidth, 20, 0x000000, 0.1);
-        shadow.setDepth(2);
-      }
-    });
-
-    // Add vegetation (trees, bushes) around buildings
-    this.createVegetation();
-  }
-
-  /**
-   * Create vegetation (trees, bushes) for a more natural look
-   */
-  private createVegetation(): void {
-    const treeSprites = ['tree1', 'tree2', 'tree3', 'tree4', 'pine1', 'pine2'];
-    const bushSprites = ['bush1', 'bush2', 'bush3'];
-
-    // Tree positions - along paths and in parks
-    const treePositions = [
-      // Along main horizontal path
-      { x: 150, y: 870 }, { x: 350, y: 930 }, { x: 550, y: 870 },
-      { x: 750, y: 930 }, { x: 950, y: 870 }, { x: 1150, y: 930 },
-      { x: 1350, y: 870 }, { x: 1550, y: 930 }, { x: 1750, y: 870 },
-      { x: 1950, y: 930 }, { x: 2150, y: 870 },
-      // Park area in cultural district
-      { x: 1050, y: 500 }, { x: 1150, y: 550 }, { x: 1250, y: 480 },
-      // Waterfront trees
-      { x: 1700, y: 200 }, { x: 1850, y: 150 }, { x: 2000, y: 250 },
-      { x: 1700, y: 1200 }, { x: 1900, y: 1350 }, { x: 2100, y: 1150 },
-      // Downtown park
-      { x: 100, y: 500 }, { x: 200, y: 550 }, { x: 150, y: 600 },
-      // Southern area
-      { x: 500, y: 1500 }, { x: 700, y: 1550 }, { x: 900, y: 1600 },
-      { x: 1100, y: 1550 }, { x: 1300, y: 1500 },
-    ];
-
-    treePositions.forEach(({ x, y }) => {
-      const spriteKey = treeSprites[Math.floor(Math.random() * treeSprites.length)];
-      if (this.textures.exists(spriteKey)) {
-        const tree = this.add.image(x, y, spriteKey);
-        tree.setScale(0.35 + Math.random() * 0.15);
-        tree.setDepth(y); // Trees sort by y position
-        tree.setAlpha(0.9);
-      }
-    });
-
-    // Bushes near buildings and paths
-    const bushPositions = [
-      { x: 100, y: 280 }, { x: 200, y: 250 }, { x: 650, y: 200 },
-      { x: 1050, y: 280 }, { x: 1350, y: 350 }, { x: 1800, y: 380 },
-      { x: 300, y: 1250 }, { x: 850, y: 1450 }, { x: 1650, y: 1350 },
-      { x: 450, y: 500 }, { x: 550, y: 480 }, { x: 1000, y: 750 },
-      { x: 2050, y: 400 }, { x: 2150, y: 800 }, { x: 1400, y: 1100 },
-    ];
-
-    bushPositions.forEach(({ x, y }) => {
-      const spriteKey = bushSprites[Math.floor(Math.random() * bushSprites.length)];
-      if (this.textures.exists(spriteKey)) {
-        const bush = this.add.image(x, y, spriteKey);
-        bush.setScale(0.3 + Math.random() * 0.1);
-        bush.setDepth(y);
-        bush.setAlpha(0.85);
-      }
-    });
-
-    // Add fountain in central area if sprite exists
-    if (this.textures.exists('fountain')) {
-      const fountain = this.add.image(this.worldWidth / 2, this.worldHeight / 2 - 150, 'fountain');
-      fountain.setScale(0.5);
-      fountain.setDepth(800);
-    }
-
-    // Add pond in waterfront district
-    if (this.textures.exists('pond')) {
-      const pond = this.add.image(1850, 500, 'pond');
-      pond.setScale(0.6);
-      pond.setDepth(1);
-    }
-  }
 
   /**
    * Create outdoor POIs for city landmarks using POIManager

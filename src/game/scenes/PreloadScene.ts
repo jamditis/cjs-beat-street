@@ -90,9 +90,7 @@ export class PreloadScene extends Phaser.Scene {
     this.load.image('apartment-pink', '/assets/tilesets/buildings/Appartment_Pink_1x2_Level2.png');
     this.load.image('postoffice', '/assets/tilesets/buildings/PostOffice.png');
 
-    // Additional buildings for variety
-    this.load.image('office', '/assets/tilesets/buildings/Office_1x1_Level3.png');
-    this.load.image('office-large', '/assets/tilesets/buildings/Office_2x2_Level3.png');
+    // Note: Office sprites removed - files don't exist in tileset
 
     // Terrain tiles
     this.load.image('grass', '/assets/tilesets/terrain/Grass.png');
