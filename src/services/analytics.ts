@@ -36,6 +36,16 @@ const ANALYTICS_PREFERENCES_KEY = 'beat-street-analytics-consent';
 const SESSION_ID_KEY = 'beat-street-session-id';
 
 /**
+ * Remove undefined values from an object.
+ * Firestore doesn't allow undefined values, so we filter them out.
+ */
+function removeUndefined<T extends Record<string, unknown>>(obj: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([_, v]) => v !== undefined)
+  ) as Partial<T>;
+}
+
+/**
  * Generate a unique session ID
  */
 function generateSessionId(): string {
@@ -263,15 +273,17 @@ async function flushEvents(): Promise<void> {
 
     events.forEach((event) => {
       const docRef = doc(collection(db, ANALYTICS_COLLECTION));
-      const docData: AnalyticsDocument = {
+      // Clean properties to remove undefined values (Firestore doesn't allow undefined)
+      const cleanedProperties = removeUndefined(event.properties);
+      const docData = removeUndefined({
         eventType: event.eventType,
         sessionId: event.sessionId,
         timestamp: serverTimestamp(),
-        properties: event.properties,
+        properties: cleanedProperties,
         venueId: event.properties.venueId as string | undefined,
         poiId: event.properties.poiId as string | undefined,
         sponsorId: event.properties.sponsorId as string | undefined,
-      };
+      }) as AnalyticsDocument;
       batch.set(docRef, docData);
     });
 

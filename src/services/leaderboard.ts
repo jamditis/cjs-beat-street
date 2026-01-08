@@ -217,11 +217,26 @@ export async function optIn(
   photoURL?: string
 ): Promise<void> {
   try {
-    await updateLeaderboardEntry(userId, {
-      displayName,
-      optedIn: true,
-      photoURL,
-    });
+    // Check if entry exists to determine if we need to include all required fields
+    const userDoc = await getDoc(doc(db, 'leaderboard', userId));
+
+    if (!userDoc.exists()) {
+      // Creating new entry - include all required fields with defaults
+      await updateLeaderboardEntry(userId, {
+        displayName,
+        optedIn: true,
+        points: 0,
+        badgeCount: 0,
+        photoURL,
+      });
+    } else {
+      // Updating existing entry - only update opt-in status and display name
+      await updateLeaderboardEntry(userId, {
+        displayName,
+        optedIn: true,
+        photoURL,
+      });
+    }
   } catch (error) {
     console.error('[leaderboard] Failed to opt in:', error);
     throw error;

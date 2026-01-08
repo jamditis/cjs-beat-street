@@ -64,18 +64,19 @@ service cloud.firestore {
     match /leaderboard/{uid} {
       allow read: if isAuthenticated() &&
                      (resource.data.optedIn == true || isOwner(uid));
+      // Create requires all fields
       allow create: if isOwner(uid) &&
                        request.resource.data.keys().hasAll(['displayName', 'points', 'badgeCount', 'optedIn', 'updatedAt']) &&
                        request.resource.data.points is number &&
                        request.resource.data.badgeCount is number &&
                        request.resource.data.optedIn is bool &&
                        request.resource.data.updatedAt is timestamp;
+      // Update validates the merged document state (setDoc with merge: true)
       allow update: if isOwner(uid) &&
-                       request.resource.data.keys().hasAll(['displayName', 'points', 'badgeCount', 'optedIn', 'updatedAt']) &&
+                       request.resource.data.updatedAt is timestamp &&
                        request.resource.data.points is number &&
                        request.resource.data.badgeCount is number &&
-                       request.resource.data.optedIn is bool &&
-                       request.resource.data.updatedAt is timestamp;
+                       request.resource.data.optedIn is bool;
       allow delete: if isOwner(uid) || isAdmin();
     }
 
