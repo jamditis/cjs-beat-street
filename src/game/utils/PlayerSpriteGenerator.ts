@@ -45,6 +45,7 @@ export class PlayerSpriteGenerator {
   generateSpriteSheet(textureKey: string = 'player'): void {
     const directions: Direction[] = ['s', 'se', 'e', 'ne', 'n', 'nw', 'w', 'sw'];
     const framesPerDirection = 4; // idle + 3 walking frames
+    const totalFrames = directions.length * framesPerDirection;
 
     // Create a sprite sheet: 8 directions × 4 frames = 32 frames
     const sheetWidth = this.charWidth * framesPerDirection;
@@ -69,6 +70,17 @@ export class PlayerSpriteGenerator {
     // Generate the texture
     renderTexture.saveTexture(textureKey);
     renderTexture.destroy();
+
+    // Add frame data to the texture so it can be used as a spritesheet
+    const texture = this.scene.textures.get(textureKey);
+    if (texture) {
+      // Add individual frames to the texture
+      for (let i = 0; i < totalFrames; i++) {
+        const frameX = (i % framesPerDirection) * this.charWidth;
+        const frameY = Math.floor(i / framesPerDirection) * this.charHeight;
+        texture.add(i, 0, frameX, frameY, this.charWidth, this.charHeight);
+      }
+    }
 
     // Create animation configurations
     this.createAnimations(textureKey, directions, framesPerDirection);
